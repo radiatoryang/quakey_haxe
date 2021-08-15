@@ -2,7 +2,10 @@
     <style>
         .label {
             font-name: "fonts/Bahnschrift.fnt";
-            font-size: 32px;
+            font-size: 16px;
+        }
+        .header {
+            font-size: 32px; padding-left: 32px; padding-top: 16px; font-weight: bold;
         }
         .scroll .inc, .scroll .deinc {
             hidden: true;
@@ -16,19 +19,18 @@
     </style>
     <scrollview width="100%" height="100%" contentWidth="100%">
 
-        <label text="QUEUE" />
+        <label styleName="header" text="QUEUE" />
         <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
             <grid columns="1">
                 <hbox style="spacing:32px;">
-                    <button text="Click Me!" width="400" height="300" />
-                    <button text="Click Me!" width="400" height="300" />
-                    <button text="Click Me!" width="400" height="300" />
-                    <button text="Click Me!" width="400" height="300" />
+                    <mapbutton mapTitle="map 1 with really long title blah blah blah" mapID="map1" />
+                    <mapbutton mapTitle="map 2 with slightly less long title" mapID="map2" />
+                    <mapbutton mapTitle="map 3 title" mapID="map3" />
                 </hbox>    
             </grid>
         </scrollview>
 
-        <label text="NEW RELEASES" />
+        <label styleName="header" text="NEW RELEASES" />
         <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
             <grid columns="1">
                 <hbox style="spacing:32px;">
