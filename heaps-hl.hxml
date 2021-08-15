@@ -7,5 +7,6 @@
 -lib haxeui-heaps
 
 -D resourcesPath=assets
+-D windowSize=1280x720
 
 -hl build/heaps/hl/Main.hl

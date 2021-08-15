@@ -1,23 +1,44 @@
 <vbox styleName="default-background" width="100%" height="100%">
     <style>
-        .button {
-            font-size: 24px;
+        .label {
+            font-name: "fonts/Bahnschrift.fnt";
+            font-size: 32px;
+        }
+        .scroll .inc, .scroll .deinc {
+            hidden: true;
+        }
+        .no-scroll {
+            border: none;
+        }
+        .no-scroll .scroll {
+            hidden: true;
         }
     </style>
-    <label text="Your Queue" />
-    <scrollview width="100%" height="180">
-        <grid columns="1">
-            <hbox style="spacing:32px;">
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-                <button text="Click Me!" width="200" height="150" />
-            </hbox>    
-        </grid>
+    <scrollview width="100%" height="100%" contentWidth="100%">
+
+        <label text="QUEUE" />
+        <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
+            <grid columns="1">
+                <hbox style="spacing:32px;">
+                    <button text="Click Me!" width="400" height="300" />
+                    <button text="Click Me!" width="400" height="300" />
+                    <button text="Click Me!" width="400" height="300" />
+                    <button text="Click Me!" width="400" height="300" />
+                </hbox>    
+            </grid>
+        </scrollview>
+
+        <label text="NEW RELEASES" />
+        <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
+            <grid columns="1">
+                <hbox style="spacing:32px;">
+                    <button text="Click Me!" width="400" height="300" />
+                    <button text="Click Me!" width="400" height="300" />
+                    <button text="Click Me!" width="400" height="300" />
+                    <button text="Click Me!" width="400" height="300" />
+                </hbox>    
+            </grid>
+        </scrollview>
+
     </scrollview>
 </vbox>
