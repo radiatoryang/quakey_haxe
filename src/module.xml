@@ -1,5 +1,0 @@
-<module id="my-module" preload="all">
-    <resources>
-        <resource path="assets/fonts" prefix="fonts" />
-    </resources>
-</module>

@@ -2,19 +2,15 @@ package ;
 
 import haxe.ui.Toolkit;
 import haxe.ui.HaxeUIApp;
-import haxe.ui.core.Component;
-import haxe.ui.macros.ComponentMacros;
 
 class Main {
     public static function main() {
         var app = new HaxeUIApp();
-
         app.ready(function() {
-            var mainView:Component = ComponentMacros.buildComponent("assets/main-view.xml");
-            app.addComponent(mainView);
+            Toolkit.theme = "dark";
+            app.addComponent(new MainView());
 
             app.start();
-            // hxd.Window.getInstance().displayMode = hxd.Window.DisplayMode.Fullscreen;
         });
     }
 }

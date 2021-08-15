@@ -5,9 +5,7 @@
 -lib hlsdl
 -lib haxeui-core
 -lib haxeui-heaps
--lib hscript
 
 -D resourcesPath=assets
--D windowSize=1280x720
 
 -hl build/heaps/hl/Main.hl
