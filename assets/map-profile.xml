@@ -1,0 +1,42 @@
+<vbox styleName="default-background" width="100%" height="100%">
+    <style>
+        .label {
+            font-name: "fonts/Bahnschrift.fnt";
+            font-size: 16px;
+        }
+        .header-big {
+            font-size: 48px;
+        }
+        .header {
+            font-size: 32px;
+        }
+        .description {
+            font-size: 24px;
+        }
+        .scroll {
+            cursor: pointer;
+        }
+        .scroll .inc, .scroll .deinc {
+            hidden: true;
+        }
+        .no-scroll {
+            border: none;
+        }
+        .no-scroll .scroll {
+            hidden: true;
+        }
+    </style>
+    <scrollview width="100%" height="100%" contentWidth="100%" padding="64">
+        <button text="<< Back" id="backButton" />
+        <spacer height="16" />
+
+        <label styleName="header-big" text="Map Title" id="title" />
+        <hbox id="authors" width="50%">
+            <label text=" by " />
+        </hbox>
+        <spacer height="16" />
+
+        <label styleName="description" text="Description" id="description" width="50%" />
+        <label text="Map Date" id="date" />
+    </scrollview>
+</vbox>

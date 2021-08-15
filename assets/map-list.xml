@@ -1,0 +1,10 @@
+<vbox width="100%" height="400">
+    <label styleName="header" text="Map List Name" id="listName" />
+    <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
+        <grid columns="1">
+            <hbox id="listContents" style="spacing:32px;">
+
+            </hbox>    
+        </grid>
+    </scrollview>
+</vbox>

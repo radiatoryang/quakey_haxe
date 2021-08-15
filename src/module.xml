@@ -1,5 +1,6 @@
 <module id="my-module" preload="all">
     <components>
         <class name="MapButton" alias="mapbutton" />
+        <class name="MapList" alias="maplist" />
     </components>
 </module>

@@ -16,31 +16,12 @@
         .no-scroll .scroll {
             hidden: true;
         }
+        .tooltip {
+            font-size: 16px;
+        }
     </style>
+    <label text="Quakey v0.1" />
     <scrollview width="100%" height="100%" contentWidth="100%">
-
-        <label styleName="header" text="QUEUE" />
-        <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
-            <grid columns="1">
-                <hbox style="spacing:32px;">
-                    <mapbutton mapTitle="map 1 with really long title blah blah blah" mapID="map1" />
-                    <mapbutton mapTitle="map 2 with slightly less long title" mapID="map2" />
-                    <mapbutton mapTitle="map 3 title" mapID="map3" />
-                </hbox>    
-            </grid>
-        </scrollview>
-
-        <label styleName="header" text="NEW RELEASES" />
-        <scrollview styleName="no-scroll" width="100%" height="350" contentHeight="100%">
-            <grid columns="1">
-                <hbox style="spacing:32px;">
-                    <button text="Click Me!" width="400" height="300" />
-                    <button text="Click Me!" width="400" height="300" />
-                    <button text="Click Me!" width="400" height="300" />
-                    <button text="Click Me!" width="400" height="300" />
-                </hbox>    
-            </grid>
-        </scrollview>
-
+        <maplist id="queue" mapListName="QUEUE" />
     </scrollview>
 </vbox>
