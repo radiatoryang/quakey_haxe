@@ -57,4 +57,6 @@ typedef MapEntry = {
     var ?description:String;
     var ?rating:Float;
     var ?authors:Array<String>;
+
+    var ?imageThumb:haxe.ui.assets.ImageInfo;
 }

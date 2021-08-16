@@ -1,5 +1,10 @@
 package ;
 
+import haxe.ui.components.Image;
+import hxd.Res;
+import sys.FileSystem;
+import sys.io.File;
+import haxe.io.Bytes;
 import haxe.ui.containers.HBox;
 import hxd.Window.DisplayMode;
 import h2d.Font.SDFChannel;
@@ -14,7 +19,13 @@ class Main {
     public static var app:HaxeUIApp;
     static var mainView:MainView;
 
+    public static inline var CACHE_PATH = "cache";
+    public static var BASE_DIR = "base_dir";
+
     public static function main() {
+        BASE_DIR = Sys.programPath();
+        BASE_DIR = BASE_DIR.substring(0, BASE_DIR.length-("Main.hl").length );
+        Res.initEmbed();
         app = new HaxeUIApp();
         app.ready(function() {
             Toolkit.theme = "dark";
@@ -33,10 +44,15 @@ class Main {
 
             var queue = mainView.findComponent("queue", MapList);
             var count = 0;
+            if (!FileSystem.exists(BASE_DIR + CACHE_PATH))
+            {
+                FileSystem.createDirectory(BASE_DIR + CACHE_PATH);
+            }
             for( mapData in db.db ) {
-                queue.addMapButton(mapData);
+                if ( count > 1) // hack
+                    queue.addMapButton(mapData);
                 count++;
-                if ( count > 8) {
+                if ( count > 10) {
                     break;
                 }
             }
