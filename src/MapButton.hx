@@ -1,5 +1,8 @@
 package;
 
+import h2d.filter.Filter;
+import haxe.ui.styles.Style;
+import h2d.filter.Glow;
 import sys.FileSystem;
 import sys.io.File;
 import Database.MapEntry;
@@ -14,7 +17,7 @@ class MapButton extends Button {
 
     public var mapData:MapEntry;
 
-    var uiTitle:Label;
+    var uiTitle:LabelOutlined;
     // var uiBody:Label;
 
     public function new() {
@@ -31,10 +34,12 @@ class MapButton extends Button {
     public override function onInitialize() {
         super.onInitialize();
 
-        uiTitle = new Label();
+        uiTitle = new LabelOutlined();
         uiTitle.text = mapData.title;
         uiTitle.padding = 16;
-        uiTitle.backgroundColor = "black";
+        // uiTitle.backgroundColor = "black";
+        // uiTitle.opacity = 0.5;
+        
         addComponent(uiTitle);
 
         tooltip = "by " + mapData.authors.join(", ") + "\n" + mapData.description.substr(0, 64);
@@ -44,7 +49,7 @@ class MapButton extends Button {
 
     public function onImageLoaded(filepath:String) {
         filepath = Main.allocateAndCacheImage(filepath);
-
+    
         if ( filepath != null)
             backgroundImage = filepath;
     }

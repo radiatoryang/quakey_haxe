@@ -3,4 +3,9 @@
         <class name="MapButton" alias="mapbutton" />
         <class name="MapList" alias="maplist" />
     </components>
+    <themes>
+    	<global>
+		    <style resource="assets/styles/quakey.css" />
+	    </global>
+    </themes>
 </module>

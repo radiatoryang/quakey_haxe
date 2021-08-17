@@ -71,7 +71,7 @@ class Main {
             for( mapData in db.db ) {
                 queue.addMapButton(mapData);
                 count++;
-                if ( count > 15) {
+                if ( count > 4) {
                     break;
                 }
             }

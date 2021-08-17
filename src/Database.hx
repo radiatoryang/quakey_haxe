@@ -40,11 +40,11 @@ class Database {
             }
 
             for (dateString in file.elementsNamed("date")) {
-                var dateData = dateString.firstChild().nodeValue.trim();
-                date = Date.fromString(dateData.substr(6, 4) + "-" + dateData.substr(3, 2) + "-" + dateData.substr(0, 2));
+                var dateData = dateString.firstChild().nodeValue.trim().split(".");
+                date = Date.fromString(dateData[2] + "-" + dateData[1] + "-" + dateData[0]);
             }
 
-            db.set( id, {id: id, title: titleText, authors: authors, description: description} );
+            db.set( id, {id: id, title: titleText, authors: authors, description: description, date: date} );
         }
     }
 }
@@ -57,6 +57,4 @@ typedef MapEntry = {
     var ?description:String;
     var ?rating:Float;
     var ?authors:Array<String>;
-
-    var ?imageThumb:haxe.ui.assets.ImageInfo;
 }

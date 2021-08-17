@@ -1,0 +1,33 @@
+.label {
+    font-name: "fonts/Bahnschrift.fnt";
+    font-size: 20px;
+}
+
+.description {
+    padding: 16px;
+    background-color: black;
+}
+
+.header-big {
+    font-size: 48px;
+}
+.header {
+    font-size: 32px; padding-left: 32px; padding-top: 16px; font-weight: bold;
+}
+
+.scrollview {
+    background-color: transparent;
+}
+
+.scroll .inc, .scroll .deinc {
+    hidden: true;
+}
+.no-scroll {
+    border: none;
+}
+.no-scroll .scroll {
+    hidden: true;
+}
+.tooltip {
+    font-size: 16px;
+}
