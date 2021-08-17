@@ -34,7 +34,7 @@ class Main {
     static var localLoader:Loader;
 
     public static inline var CACHE_PATH = "cache";
-    public static var BASE_DIR = "base_dir";
+    public static var BASE_DIR = "base_dir"; // has a trailing slash
 
     public static function main() {
         BASE_DIR = Sys.programPath();
@@ -45,6 +45,9 @@ class Main {
 
         mainThread = Thread.current();
         threadPool = new ElasticThreadPool(4);
+
+        // temp until the user select screen goes up
+        UserState.instance = new UserState();
 
         app = new HaxeUIApp();
         app.ready(function() {
@@ -75,7 +78,34 @@ class Main {
                     break;
                 }
             }
+
+            var newReleases = mainView.findComponent("newReleases", MapList);
+            var latest = Lambda.array(db.db);
+            latest.sort( (a,b) -> getTotalDays(b.date) - getTotalDays(a.date) );
+            for( i in 0...8 ) {
+                newReleases.addMapButton( latest[i] );
+            }
+
+            var highlyRated = mainView.findComponent("highlyRated", MapList);
+            var highlyRatedOld = mainView.findComponent("highlyRatedOld", MapList);
+            var rated = Lambda.array(db.db);
+
+            var ratedModern = rated.filter( map -> map.rating >= 4.0 && map.date.getFullYear() >= 2010 );
+            hxd.Rand.create().shuffle(ratedModern);
+            for( i in 0... 8) {
+                highlyRated.addMapButton( ratedModern[i] );
+            }
+
+            var ratedClassic = rated.filter( map -> map.rating >= 4.0 && map.date.getFullYear() < 2010 );
+            hxd.Rand.create().shuffle(ratedClassic);
+            for( i in 0... 8) {
+                highlyRatedOld.addMapButton( ratedClassic[i] );
+            }
         });
+    }
+
+    static inline function getTotalDays(date:Date) {
+        return date.getFullYear() * 365 + date.getMonth() * 31 + date.getDate();
     }
 
     public static function getImageAsync(filename:String, callback:String->Void) {

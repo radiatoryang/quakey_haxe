@@ -12,6 +12,7 @@ import haxe.ui.components.Button;
 import haxe.ui.components.Label;
 import haxe.ui.containers.VBox;
 using StringTools;
+using DateTools;
 
 class MapButton extends Button {
 
@@ -39,10 +40,10 @@ class MapButton extends Button {
         uiTitle.padding = 16;
         // uiTitle.backgroundColor = "black";
         // uiTitle.opacity = 0.5;
-        
         addComponent(uiTitle);
 
-        tooltip = "by " + mapData.authors.join(", ") + "\n" + mapData.description.substr(0, 64);
+        tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others\n" : "\n" ) + (mapData.date != null ? mapData.date.format(" %d %B %Y") : " ");
+        borderSize = 0;
 
         Main.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
     }

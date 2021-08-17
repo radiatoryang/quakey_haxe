@@ -1,3 +1,7 @@
+.default-background {
+    background-color: #201b0e;
+}
+
 .label {
     font-name: "fonts/Bahnschrift.fnt";
     font-size: 20px;
@@ -5,19 +9,49 @@
 
 .description {
     padding: 16px;
-    background-color: black;
+    background-color: #201b0e;
+    background-opacity: 0.69;
 }
 
 .header-big {
     font-size: 48px;
 }
+
 .header {
     font-size: 32px; padding-left: 32px; padding-top: 16px; font-weight: bold;
+}
+
+.button {
+    background-color: #363020;
+    border-size: 2;
+    border-top-color: #544d3d;
+    border-left-color: #544d3d;
+    border-right-color: #544d3d;
+    border-bottom-color: #423b26;
+}
+
+.bigButton {
+    font-size: 16px;
+    padding: 8px;
+    width: 320px;
+}
+
+.biggerButton {
+    font-size: 28px;
+    padding: 12px;
+    width: 320px;
+}
+
+#buttonDownload {
+    background-color: #544d3d;
 }
 
 .scrollview {
     background-color: transparent;
 }
+
+
+/* make scrollbars look fancier */
 
 .scroll .inc, .scroll .deinc {
     hidden: true;
@@ -27,7 +61,4 @@
 }
 .no-scroll .scroll {
     hidden: true;
-}
-.tooltip {
-    font-size: 16px;
 }
