@@ -38,6 +38,10 @@ class Main {
     public static function main() {
         BASE_DIR = Sys.programPath();
         BASE_DIR = BASE_DIR.substring(0, BASE_DIR.length-("Main.hl").length );
+
+        if (!FileSystem.exists(BASE_DIR + CACHE_PATH))
+            FileSystem.createDirectory(BASE_DIR + CACHE_PATH);
+
         Res.initEmbed();
         embedLoader = hxd.Res.loader;
         localLoader = new hxd.res.Loader( new hxd.fs.LocalFileSystem(Main.BASE_DIR, "") );
@@ -46,7 +50,9 @@ class Main {
         threadPool = new ElasticThreadPool(1, 5.0); // need to keep this ThreadPool at 1 otherwise the CPU usage gets really intense
 
         // temp until the user select screen goes up
-        UserState.instance = new UserState();
+        if ( UserState.getUsers() != null ) {
+            UserState.instance.currentData = UserState.loadUser( UserState.getUsers()[0] );
+        }
 
         app = new HaxeUIApp();
         app.ready(function() {
@@ -60,60 +66,21 @@ class Main {
             app.start();
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
-            // hxd.Window.getInstance().vsync = true;
-
-            db = new Database();
-
-            var queue = mainView.findComponent("queue", MapList);
-            var count = 0;
-            if (!FileSystem.exists(BASE_DIR + CACHE_PATH))
-            {
-                FileSystem.createDirectory(BASE_DIR + CACHE_PATH);
-            }
-            for( mapData in db.db ) {
-                queue.addMapButton(mapData);
-                count++;
-                if ( count > 4) {
-                    break;
-                }
-            }
-
-            var newReleases = mainView.findComponent("newReleases", MapList);
-            var latest = Lambda.array(db.db);
-            latest.sort( (a,b) -> getTotalDays(b.date) - getTotalDays(a.date) );
-            for( i in 0...8 ) {
-                newReleases.addMapButton( latest[i] );
-            }
-
-            var highlyRated = mainView.findComponent("highlyRated", MapList);
-            var highlyRatedOld = mainView.findComponent("highlyRatedOld", MapList);
-            var rated = Lambda.array(db.db);
-
-            var ratedModern = rated.filter( map -> map.rating >= 4.0 && map.date.getFullYear() >= 2010 );
-            hxd.Rand.create().shuffle(ratedModern);
-            for( i in 0... 8) {
-                highlyRated.addMapButton( ratedModern[i] );
-            }
-
-            var ratedClassic = rated.filter( map -> map.rating >= 4.0 && map.date.getFullYear() < 2010 );
-            hxd.Rand.create().shuffle(ratedClassic);
-            for( i in 0... 8) {
-                highlyRatedOld.addMapButton( ratedClassic[i] );
-            }
-
-            
         });
     }
 
-    static inline function getTotalDays(date:Date) {
-        return date.getFullYear() * 365 + date.getMonth() * 31 + date.getDate();
-    }
-
     public static function getImageAsync(filename:String, callback:String->Void) {
-        threadPool.run( () -> { downloadImage(filename, callback); } );
+        var localPath = CACHE_PATH + "/" + filename;
+        // if file is already cached, we don't need to do anything
+        if ( TileCache.exists(localPath) ) {
+            callback(localPath);
+            return;
+        }
+        // otherwise, start a thread to download it
+        threadPool.run( () -> { downloadImageAsync(filename, callback); } );
     }
 
-    public static function downloadImage(filename:String, callback:String -> Void) {
+    static function downloadImageAsync(filename:String, callback:String -> Void) {
         var localPath = CACHE_PATH + "/" + filename;
         var fullPath = BASE_DIR + localPath;
         var fullPathWindows = BASE_DIR + localPath.replace("/", "\\");

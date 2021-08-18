@@ -33,6 +33,15 @@ class MapList extends VBox {
         mapButtons.push(newButton);
     }
 
+    public function destroyMapButtons() {
+        while ( mapButtons.length > 0) {
+            var mapButton = mapButtons.pop();
+            mapButton.hide();
+            removeComponent(mapButton);
+            // TODO: how to actually destroy this component?
+        }
+    }
+
     @:bind(buttonPrevious, MouseEvent.MOUSE_OVER)
     @:bind(buttonNext, MouseEvent.MOUSE_OVER)
     private function onHoverSideButtons(e:MouseEvent) {

@@ -109,6 +109,7 @@ class MapProfile extends VBox {
     @:bind(buttonQueue, MouseEvent.CLICK)
     private function onQueueButton(e:MouseEvent) {
         UserState.instance.queueMap( mapData.id );
+        MainView.instance.refreshQueue();
         // TODO: update map profile screen?
     }
 

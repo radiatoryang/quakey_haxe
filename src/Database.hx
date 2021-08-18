@@ -8,9 +8,12 @@ using UnicodeString;
 class Database {
 
     var xmlData:Xml;
+    public static var instance:Database = new Database();
     public var db: Map<String, MapEntry> = new Map<String, MapEntry>();
 
-    public function new() {
+    private function new() {
+        instance = this;
+
         var htmlStripRegex = ~/<[^>]*>/g;
 
         xmlData = Xml.parse( File.getContent( "quaddicted_database.xml" ) );
@@ -18,6 +21,7 @@ class Database {
         for (file in root.elementsNamed("file")) {
             var id = file.get("id");
             var titleText = id;
+            var md5 = "";
             var authors = new Array<String>();
             var description = id;
             var date:Date = null;
@@ -29,6 +33,10 @@ class Database {
                 if ( titleText == "Title" || titleText == "Untitled" ) {
                     titleText = id;
                 }
+            }
+
+            for (sumString in file.elementsNamed("md5sum")) {
+                md5 = sumString.firstChild().nodeValue.trim();
             }
 
             for(authorString in file.elementsNamed("author")) {
@@ -55,6 +63,7 @@ class Database {
             db.set( id, {
                 id: id, 
                 title: titleText, 
+                md5sum: md5,
                 authors: authors, 
                 description: description, 
                 date: date, 
@@ -63,12 +72,17 @@ class Database {
             } );
         }
     }
+    
+    public static inline function getTotalDays(date:Date) {
+        return date.getFullYear() * 365 + date.getMonth() * 31 + date.getDate();
+    }
 }
 
 typedef MapEntry = {
     var id:String;
     var title:String;
     
+    var ?md5sum:String;
     var ?size:Float;
     var ?date:Date;
     var ?description:String;

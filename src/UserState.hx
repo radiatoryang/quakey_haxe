@@ -9,7 +9,7 @@ using UnicodeString;
 
 /** maintains different users, user settings, queued maps, etc. **/
 class UserState {
-    public static var instance:UserState;
+    public static var instance:UserState = new UserState();
     public var currentData:UserData;
 
     static inline var USER_DIR = "users/";
@@ -19,39 +19,32 @@ class UserState {
     public function new() {
         currentData = {
             username: DEFAULT_USERNAME,
-            mapState: new Map<String, MapState>(),
+            mapQueue: new Array<String>(),
+            mapComplete: new Array<String>(),
             downloadPath: DEFAULT_DOWNLOAD_DIR
         }
     }
 
     public function queueMap(mapID:String) {
-        var newMapState = {
-            id: mapID,
-            status: MapStatus.Queued,
-            lastModified: Date.now()
-        };
-        currentData.mapState.set(mapID, newMapState);
+        if ( !currentData.mapQueue.contains(mapID) )
+            currentData.mapQueue.push(mapID);
         // TODO: display in event log?
         saveUser(currentData);
     }
 
     public function markMap(mapID:String) {
-        var newMapState = {
-            id: mapID,
-            status: MapStatus.Completed,
-            lastModified: Date.now()
-        };
-        currentData.mapState.set(mapID, newMapState);
+        if ( !currentData.mapComplete.contains(mapID) )
+            currentData.mapComplete.push(mapID);
         // TODO: display in event log?
         saveUser(currentData);
     }
 
-    public function getMapStatus(mapID:String):MapStatus {
-        return currentData.mapState.exists(mapID) ? currentData.mapState[mapID].status : null;
-    }
+    // public function getMapStatus(mapID:String):MapStatus {
+    //     return currentData.mapState.exists(mapID) ? currentData.mapState[mapID].status : null;
+    // }
 
     public function isMapCompleted(mapID:String):Bool {
-        return currentData.mapState.exists(mapID) && currentData.mapState[mapID].status == MapStatus.Completed;
+        return currentData.mapComplete.contains(mapID);
     }
 
     public static function getUsers():Array<String> {
@@ -63,8 +56,8 @@ class UserState {
         return files;
     }
 
-    public static function loadUser(username:String) {
-        var filename = Main.BASE_DIR + USER_DIR + username + ".json";
+    public static function loadUser(filename:String) {
+        var filename = Main.BASE_DIR + USER_DIR + filename;
         if ( !FileSystem.exists(filename) ) {
             trace ("couldn't find file " + filename);
             return null;
@@ -87,21 +80,8 @@ class UserState {
 
 typedef UserData = {
     var username: String;
-    var mapState: Map<String, MapState>;
+    var mapQueue: Array<String>;
+    var mapComplete: Array<String>;
     var ?quakePath: String;
     var downloadPath: String;
-}
-
-typedef MapState = {
-    var id:String;
-    var status:MapStatus;
-    var ?lastModified:Date;
-}
-
-enum MapStatus {
-    Queued;
-    Downloading;
-    ReadyToPlay;
-    Played;
-    Completed;
 }
