@@ -1,6 +1,5 @@
 package ;
 
-import sys.thread.Mutex;
 import sys.thread.ElasticThreadPool;
 import haxe.ui.backend.heaps.TileCache;
 import sys.thread.Thread;
@@ -44,7 +43,7 @@ class Main {
         localLoader = new hxd.res.Loader( new hxd.fs.LocalFileSystem(Main.BASE_DIR, "") );
 
         mainThread = Thread.current();
-        threadPool = new ElasticThreadPool(4);
+        threadPool = new ElasticThreadPool(1, 5.0); // need to keep this ThreadPool at 1 otherwise the CPU usage gets really intense
 
         // temp until the user select screen goes up
         UserState.instance = new UserState();
@@ -61,7 +60,7 @@ class Main {
             app.start();
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
-            hxd.Window.getInstance().title = "Quakey";
+            // hxd.Window.getInstance().vsync = true;
 
             db = new Database();
 
@@ -101,6 +100,8 @@ class Main {
             for( i in 0... 8) {
                 highlyRatedOld.addMapButton( ratedClassic[i] );
             }
+
+            
         });
     }
 
@@ -123,7 +124,10 @@ class Main {
                 File.saveBytes(fullPathWindows, bytes); 
                 mainThread.events.run( () -> { callback(localPath); } );
             }
-            http.onError = function(status) { trace("error: " + status); }
+            http.onError = function(status) { 
+                // TODO: queue another request later on?
+                trace("error: " + status); 
+            }
             http.request();
         } else {
             // callback( localPath );

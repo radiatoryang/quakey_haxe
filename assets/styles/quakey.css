@@ -10,7 +10,7 @@
 .description {
     padding: 16px;
     background-color: #201b0e;
-    background-opacity: 0.69;
+    background-opacity: 0.8;
 }
 
 .header-big {
@@ -42,7 +42,7 @@
     width: 320px;
 }
 
-#buttonDownload {
+#buttonQueue {
     background-color: #544d3d;
 }
 
@@ -56,9 +56,10 @@
 .scroll .inc, .scroll .deinc {
     hidden: true;
 }
-.no-scroll {
+
+.mapList, .no-scroll {
     border: none;
 }
-.no-scroll .scroll {
+.mapList .scroll, .no-scroll .scroll {
     hidden: true;
 }

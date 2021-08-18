@@ -31,7 +31,7 @@ class MapProfile extends VBox {
             textFilter = new Glow(0x000000, 0.4, 1);
 
         if ( blurFilter == null)
-            blurFilter = new Blur(4.0);
+            blurFilter = new Blur(16.0);
     }
 
     public override function onInitialize() {

@@ -1,5 +1,6 @@
 package ;
 
+import haxe.ui.styles.animation.util.Actuator;
 import haxe.ui.components.Button;
 import haxe.ui.containers.HBox;
 import haxe.ui.components.Label;
@@ -12,6 +13,8 @@ using DateTools;
 @:build(haxe.ui.ComponentBuilder.build("assets/map-list.xml"))
 class MapList extends VBox {
     public var mapListName:String = "NEW LIST";
+    var mapButtons:Array<MapButton> = new Array<MapButton>();
+    // public var listContents:HBox;
 
     public function new() {
         super();
@@ -19,14 +22,38 @@ class MapList extends VBox {
 
     public override function onInitialize() {
         super.onInitialize();
+        listContents = findComponent("listContents", HBox);
         findComponent("listName", Label).text = mapListName;
     }
 
     public function addMapButton(mapData:MapEntry) {
-        var listContents = findComponent("listContents", HBox);
         var newButton = new MapButton();
         newButton.mapData = mapData;
         listContents.addComponent(newButton);
+        mapButtons.push(newButton);
+    }
+
+    @:bind(buttonPrevious, MouseEvent.MOUSE_OVER)
+    @:bind(buttonNext, MouseEvent.MOUSE_OVER)
+    private function onHoverSideButtons(e:MouseEvent) {
+        listContents.disableInteractivity(true);
+    }
+
+    @:bind(buttonPrevious, MouseEvent.MOUSE_OUT)
+    @:bind(buttonNext, MouseEvent.MOUSE_OUT)
+    private function onHoverEndSideButtons(e:MouseEvent) {
+        listContents.disableInteractivity(false);
+    }
+
+    @:bind(buttonPrevious, MouseEvent.CLICK)
+    private function onPrevious(e:MouseEvent) {
+        mapScroll.hscrollPos -= mapScroll.width;
+    }
+
+    @:bind(buttonNext, MouseEvent.CLICK)
+    private function onNext(e:MouseEvent) {
+        mapScroll.hscrollPos += mapScroll.width;
+        //mapScroll.hscrollPos += mapScroll.hscrollPageSize;
     }
 
     // private var _fadeTimer:Timer = null;
