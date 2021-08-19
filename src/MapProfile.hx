@@ -1,16 +1,17 @@
 package ;
 
+import Database.MapEntry;
+import Database.MapStatus;
 
-import h2d.filter.Blur;
 import hxd.System;
 import h2d.filter.Filter;
 import h2d.filter.Glow;
-import h2d.filter.DropShadow;
+import h2d.filter.Blur;
+
 import haxe.ui.containers.ScrollView;
 import haxe.ui.components.Button;
 import haxe.ui.containers.HBox;
 import haxe.ui.components.Label;
-import Database.MapEntry;
 import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
 
@@ -56,21 +57,23 @@ class MapProfile extends VBox {
             date.text += "    " + Std.string(mapData.size) + "mb";
         }
         if ( mapData.rating != null && mapData.rating > 0) {
-            date.text += "    " + Std.string(mapData.rating * 20) + "%";
-            if ( mapData.rating > 4.75 ) {
-                date.text += " (GOD MODE)";
-            } else if ( mapData.rating > 4.5 ) {
+            date.text += "    " + Std.string( Math.sqrt(mapData.rating * 0.2) * 100) + "%";
+            if ( mapData.rating >= 4.75 ) {
+                date.text += " (GOD MODE!)";
+            } else if ( mapData.rating >= 4.5 ) {
                 date.text += " (Highly recommended!)";
-            } else if ( mapData.rating > 4.0) {
+            } else if ( mapData.rating >= 4.0) {
+                date.text += " (Recommended!)";
+            } else if ( mapData.rating >= 3.5) {
                 date.text += " (Great)";
-            } else if ( mapData.rating > 3.5) {
-                date.text += " (Very Good)";
-            } else if ( mapData.rating > 3.0) {
+            } else if ( mapData.rating >= 3.0) {
                 date.text += " (Good)";
-            } else if ( mapData.rating > 2.5) {
+            } else if ( mapData.rating >= 2.5) {
                 date.text += " (Average)";
+            } else if ( mapData.rating >= 2.0) {
+                date.text += " (Below Average)";
             } else {
-                date.text += " (Terrible)";
+                date.text += " (Not Recommended)";
             }
         }
         date.filter = textFilter;
@@ -79,12 +82,29 @@ class MapProfile extends VBox {
         description.text = mapData.description;
         description.filter = textFilter;
 
-        Main.getImageAsync(mapData.id + "_injector.jpg", onImageLoadedPreview );
-        Main.getImageAsync(mapData.id + ".jpg", onImageLoaded );
+        Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoadedPreview );
+        Downloader.instance.getImageAsync(mapData.id + ".jpg", onImageLoaded );
+    }
+
+     /** mainly for refreshing the buttons on the map profile page; nothing else really changes **/
+    public function refresh() {
+        buttonQueue.text = switch( Database.instance.getMapStatus( mapData.id) ) {
+            case NotQueued: "QUEUE DOWNLOAD";
+            case Queued: "DOWNLOADING...";
+            case Downloaded: "INSTALL AND PLAY";
+        }
+    }
+
+    public static function refreshAllVisible() {
+        for (mapProfile in cache) {
+            if ( mapProfile.visible ) {
+                mapProfile.refresh();
+            }
+        }
     }
 
     public function onImageLoadedPreview(filepath:String) {
-        filepath = Main.allocateAndCacheImage(filepath);
+        filepath = Downloader.instance.allocateAndCacheImage(filepath);
 
         if ( filepath != null ) {
             findComponent("background-preview", VBox).backgroundImage = filepath;
@@ -93,24 +113,31 @@ class MapProfile extends VBox {
     }
 
     public function onImageLoaded(filepath:String) {
-        filepath = Main.allocateAndCacheImage(filepath);
+        filepath = Downloader.instance.allocateAndCacheImage(filepath);
 
         if ( filepath != null )
             findComponent("background", ScrollView).backgroundImage = filepath;
     }
-
-
     
     @:bind(backButton, MouseEvent.CLICK)
     private function onBackButton(e:MouseEvent) {
         hide();
+        refreshAllVisible();
     }
 
     @:bind(buttonQueue, MouseEvent.CLICK)
     private function onQueueButton(e:MouseEvent) {
-        UserState.instance.queueMap( mapData.id );
-        MainView.instance.refreshQueue();
-        // TODO: update map profile screen?
+        var status = Database.instance.getMapStatus( mapData.id);
+        if ( status == MapStatus.NotQueued ) {
+            UserState.instance.queueMap( mapData.id );
+            MainView.instance.refreshQueue();
+        } else if ( status == MapStatus.Downloaded ) {
+            // TODO: install and launch map?
+        } else { 
+            // do nothing, map is already queued and downloading
+            // TODO... make it prioritize the download?
+        }
+        refresh();
     }
 
     @:bind(buttonMark, MouseEvent.CLICK)

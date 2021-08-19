@@ -1,7 +1,7 @@
 package ;
 
 import sys.thread.ElasticThreadPool;
-import haxe.ui.backend.heaps.TileCache;
+
 import sys.thread.Thread;
 import haxe.ui.ToolkitAssets;
 import hxd.res.Loader;
@@ -25,15 +25,13 @@ class Main {
     static var db:Database;
     public static var app:HaxeUIApp;
     public static var mainView:MainView;
-
     public static var mainThread:Thread;
-    static var threadPool: ElasticThreadPool;
 
     static var embedLoader:Loader;
-    static var localLoader:Loader;
 
-    public static inline var CACHE_PATH = "cache";
     public static var BASE_DIR = "base_dir"; // has a trailing slash
+    public static inline var CACHE_PATH = "cache";
+    public static inline var DOWNLOAD_PATH = "download";
 
     public static function main() {
         BASE_DIR = Sys.programPath();
@@ -42,16 +40,19 @@ class Main {
         if (!FileSystem.exists(BASE_DIR + CACHE_PATH))
             FileSystem.createDirectory(BASE_DIR + CACHE_PATH);
 
+        if (!FileSystem.exists(BASE_DIR + DOWNLOAD_PATH))
+            FileSystem.createDirectory(BASE_DIR + DOWNLOAD_PATH);
+
         Res.initEmbed();
         embedLoader = hxd.Res.loader;
-        localLoader = new hxd.res.Loader( new hxd.fs.LocalFileSystem(Main.BASE_DIR, "") );
 
         mainThread = Thread.current();
-        threadPool = new ElasticThreadPool(1, 5.0); // need to keep this ThreadPool at 1 otherwise the CPU usage gets really intense
+        Downloader.init();
 
         // temp until the user select screen goes up
         if ( UserState.getUsers() != null ) {
             UserState.instance.currentData = UserState.loadUser( UserState.getUsers()[0] );
+            Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
         }
 
         app = new HaxeUIApp();
@@ -69,66 +70,5 @@ class Main {
         });
     }
 
-    public static function getImageAsync(filename:String, callback:String->Void) {
-        var localPath = CACHE_PATH + "/" + filename;
-        // if file is already cached, we don't need to do anything
-        if ( TileCache.exists(localPath) ) {
-            callback(localPath);
-            return;
-        }
-        // otherwise, start a thread to download it
-        threadPool.run( () -> { downloadImageAsync(filename, callback); } );
-    }
 
-    static function downloadImageAsync(filename:String, callback:String -> Void) {
-        var localPath = CACHE_PATH + "/" + filename;
-        var fullPath = BASE_DIR + localPath;
-        var fullPathWindows = BASE_DIR + localPath.replace("/", "\\");
-        if ( !FileSystem.exists(fullPathWindows) ) {
-            var url = "https://www.quaddicted.com/reviews/screenshots/" + filename;
-            var http = new haxe.Http(url);
-            http.onBytes = function(bytes) { 
-                File.saveBytes(fullPathWindows, bytes); 
-                mainThread.events.run( () -> { callback(localPath); } );
-            }
-            http.onError = function(status) { 
-                // TODO: queue another request later on?
-                trace("error: " + status); 
-            }
-            http.request();
-        } else {
-            // callback( localPath );
-            mainThread.events.run( () -> { callback(localPath); } );
-        }
-    }
-
-    /* returns filepath string if the image filepath is valid */
-    public static function allocateAndCacheImage(filepath:String) {
-        // double check the file exists
-        if ( !localLoader.exists(filepath) ) {
-            return null;
-        }
-
-        var data = localLoader.load(filepath);
-
-        // double check the file isn't an html
-        var text = data.toText();
-        if ( text.startsWith("<html>") ) {
-            return null;
-        }
-
-        cacheImage(filepath, data.toImage() );
-
-        // hxd.Res.loader = localLoader;
-        // ToolkitAssets.instance.getImage(filepath, null); 
-        // hxd.Res.loader = embedLoader;
-
-        return filepath;
-    }
-
-    static function cacheImage(filepath:String, image:hxd.res.Image) {
-        var imageData = { width: image.getSize().width, height: image.getSize().height, data: image.toBitmap() };
-        @:privateAccess ToolkitAssets.instance._imageCache.set(filepath, imageData);
-        TileCache.set(filepath, image.toTile() );
-    }
 }

@@ -1,16 +1,8 @@
 package;
 
-import h2d.filter.Filter;
-import haxe.ui.styles.Style;
-import h2d.filter.Glow;
-import sys.FileSystem;
-import sys.io.File;
 import Database.MapEntry;
-import haxe.ui.containers.Box;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.components.Button;
-import haxe.ui.components.Label;
-import haxe.ui.containers.VBox;
 using StringTools;
 using DateTools;
 
@@ -45,11 +37,11 @@ class MapButton extends Button {
         tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others\n" : "\n" ) + (mapData.date != null ? mapData.date.format(" %d %B %Y") : " ");
         borderSize = 0;
 
-        Main.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
+        Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
     }
 
     public function onImageLoaded(filepath:String) {
-        filepath = Main.allocateAndCacheImage(filepath);
+        filepath = Downloader.instance.allocateAndCacheImage(filepath);
     
         if ( filepath != null)
             backgroundImage = filepath;
@@ -76,9 +68,8 @@ class MapButton extends Button {
         }
         var mapProfile = MapProfile.cache[mapData.id];
         mapProfile.show();
-        if ( mapProfile.parentComponent != null ) {
-            mapProfile.moveComponentToFront();
-        }
+        mapProfile.moveComponentToFront();
+        mapProfile.refresh();
     }    
 
     // function set_nodeBody(newNodeBody) {

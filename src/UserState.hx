@@ -14,14 +14,12 @@ class UserState {
 
     static inline var USER_DIR = "users/";
     static inline var DEFAULT_USERNAME = "Ranger";
-    static inline var DEFAULT_DOWNLOAD_DIR = "download/";
 
     public function new() {
         currentData = {
             username: DEFAULT_USERNAME,
             mapQueue: new Array<String>(),
-            mapComplete: new Array<String>(),
-            downloadPath: DEFAULT_DOWNLOAD_DIR
+            mapComplete: new Array<String>()
         }
     }
 
@@ -39,9 +37,9 @@ class UserState {
         saveUser(currentData);
     }
 
-    // public function getMapStatus(mapID:String):MapStatus {
-    //     return currentData.mapState.exists(mapID) ? currentData.mapState[mapID].status : null;
-    // }
+    public function isMapQueued(mapID:String):Bool {
+        return currentData.mapQueue.contains(mapID);
+    }
 
     public function isMapCompleted(mapID:String):Bool {
         return currentData.mapComplete.contains(mapID);
@@ -83,5 +81,4 @@ typedef UserData = {
     var mapQueue: Array<String>;
     var mapComplete: Array<String>;
     var ?quakePath: String;
-    var downloadPath: String;
 }

@@ -76,6 +76,16 @@ class Database {
     public static inline function getTotalDays(date:Date) {
         return date.getFullYear() * 365 + date.getMonth() * 31 + date.getDate();
     }
+
+    public function getMapStatus(mapID:String) {
+        if ( Downloader.instance.isMapDownloaded(mapID) ) {
+            return MapStatus.Downloaded;
+        } else if (UserState.instance.isMapQueued(mapID) ) {
+            return MapStatus.Queued;
+        } else {
+            return MapStatus.NotQueued;
+        }
+    }
 }
 
 typedef MapEntry = {
@@ -97,4 +107,10 @@ typedef TechInfo = {
     var ?commandline:String;
     var ?startmap:Array<String>;
     var ?requirements:Array<String>;
+}
+
+enum MapStatus {
+    NotQueued;
+    Queued;
+    Downloaded;
 }
