@@ -57,19 +57,7 @@ class MapButton extends Button {
 
     @:bind(this, MouseEvent.CLICK)
     function onMapClick(e) {
-        if ( MapProfile.cache.exists(mapData.id)==false ) {
-            var mapProfile = new MapProfile();
-            mapProfile.percentWidth = 100;
-            mapProfile.percentHeight = 100;
-            mapProfile.includeInLayout = false;
-            mapProfile.mapData = mapData;
-            Main.app.addComponent(mapProfile);
-            MapProfile.cache.set(mapData.id, mapProfile);
-        }
-        var mapProfile = MapProfile.cache[mapData.id];
-        mapProfile.show();
-        mapProfile.moveComponentToFront();
-        mapProfile.refresh();
+        MapProfile.openMapProfile( mapData );
     }    
 
     // function set_nodeBody(newNodeBody) {

@@ -57,7 +57,7 @@ class Database {
             }
 
             for (sizeString in file.elementsNamed("size")) {
-                size = Std.parseInt(sizeString.firstChild().nodeValue.trim()) / 1000.0;
+                size = Math.round( Std.parseInt(sizeString.firstChild().nodeValue.trim()) / 100.0 ) / 10.0;
             }
 
             db.set( id, {

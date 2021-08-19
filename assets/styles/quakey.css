@@ -50,6 +50,11 @@
     background-color: transparent;
 }
 
+.transparent {
+    background-color: transparent;
+    background-opacity: 0;
+}
+
 
 /* make scrollbars look fancier */
 

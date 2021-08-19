@@ -1,5 +1,6 @@
 package ;
 
+import haxe.ui.core.Screen;
 import Database.MapEntry;
 import Database.MapStatus;
 
@@ -57,7 +58,7 @@ class MapProfile extends VBox {
             date.text += "    " + Std.string(mapData.size) + "mb";
         }
         if ( mapData.rating != null && mapData.rating > 0) {
-            date.text += "    " + Std.string( Math.sqrt(mapData.rating * 0.2) * 100) + "%";
+            date.text += "    " + Std.string( Math.round(Math.sqrt(mapData.rating * 0.2) * 100) ) + "%";
             if ( mapData.rating >= 4.75 ) {
                 date.text += " (GOD MODE!)";
             } else if ( mapData.rating >= 4.5 ) {
@@ -129,6 +130,7 @@ class MapProfile extends VBox {
     private function onQueueButton(e:MouseEvent) {
         var status = Database.instance.getMapStatus( mapData.id);
         if ( status == MapStatus.NotQueued ) {
+            Notify.instance.addNotify(mapData.id, "queued " + mapData.title + " for download");
             UserState.instance.queueMap( mapData.id );
             MainView.instance.refreshQueue();
         } else if ( status == MapStatus.Downloaded ) {
@@ -149,5 +151,29 @@ class MapProfile extends VBox {
     @:bind(buttonQuad, MouseEvent.CLICK)
     private function onQuadButton(e:MouseEvent) {
         System.openURL("https://www.quaddicted.com/reviews/" + mapData.id + ".html");
+    }
+
+    public static function openMapProfile(mapData:MapEntry) {
+        if ( MapProfile.cache.exists(mapData.id)==false ) {
+            var mapProfile = new MapProfile();
+            mapProfile.percentWidth = 100;
+            mapProfile.percentHeight = 100;
+            mapProfile.includeInLayout = false;
+            mapProfile.mapData = mapData;
+            Main.app.addComponent(mapProfile);
+            MapProfile.cache.set(mapData.id, mapProfile);
+        }
+        var mapProfile = MapProfile.cache[mapData.id];
+        // push new map profile screen to the front, but don't push it in front of the Notifications layer
+        if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Notify.instance ) {
+            Screen.instance.setComponentIndex(mapProfile, Screen.instance.rootComponents.length - 1 );
+        } else {
+            Screen.instance.setComponentIndex(mapProfile, Screen.instance.rootComponents.length );
+        }
+        mapProfile.show();
+        mapProfile.refresh();
+
+        // temp for testing
+        Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
     }
 }

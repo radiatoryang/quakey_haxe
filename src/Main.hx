@@ -1,5 +1,6 @@
 package ;
 
+import haxe.ui.core.Screen;
 import sys.thread.ElasticThreadPool;
 
 import sys.thread.Thread;
@@ -65,6 +66,8 @@ class Main {
             mainView = new MainView();
             app.addComponent(mainView);
             app.start();
+
+            app.addComponent( Notify.init() );
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
         });

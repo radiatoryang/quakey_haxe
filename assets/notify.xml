@@ -1,0 +1,9 @@
+<vbox width="32%" height="20%">
+    <listview backgroundColor="blue" width="100%" height="100%" id="notifyList" selectedIndex="1">
+        <item-renderer styleName="default-background" layoutName="horizontal" width="100%" height="32px">
+            <!--<image id="notifyIcon" />-->
+            <button id="notifyText" width="100%" height="32px" />
+            <button id="notifyDismiss" width="32px" height="32px" text="x" />
+        </item-renderer>
+    </listview>
+</vbox>
