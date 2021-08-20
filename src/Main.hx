@@ -33,6 +33,8 @@ class Main {
     public static var BASE_DIR = "base_dir"; // has a trailing slash
     public static inline var CACHE_PATH = "cache";
     public static inline var DOWNLOAD_PATH = "download";
+    // public static inline var INSTALLS_PATH = "installs";
+    public static inline var TEMPLATE_PATH = "template";
 
     public static function main() {
         BASE_DIR = Sys.programPath();

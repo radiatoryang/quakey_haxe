@@ -6,6 +6,7 @@ import sys.io.File;
 using StringTools;
 using UnicodeString;
 
+/** parses the XML from Quaddicted (description, metadata, install instructions) **/
 class Database {
 
     var xmlData:Xml;
@@ -61,6 +62,26 @@ class Database {
                 size = Math.round( Std.parseInt(sizeString.firstChild().nodeValue.trim()) / 100.0 ) / 10.0;
             }
 
+            var techInfo: TechInfo = { };
+            for(techInfoElement in file.elementsNamed("techinfo")) {
+                for(zipString in techInfoElement.elementsNamed("zipbasedir")) {
+                    techInfo.zipbasedir = zipString.firstChild().nodeValue.trim();
+                }
+                for(commandString in techInfoElement.elementsNamed("commandline")) {
+                    techInfo.commandline = commandString.firstChild().nodeValue.trim();
+                }
+                for(reqElement in techInfoElement.elementsNamed("requirements")) {
+                    techInfo.requirements = new Array<String>();
+                    for( fileString in reqElement.elementsNamed("file") ) {
+                        techInfo.requirements.push( fileString.get("id") );
+                    }
+                }
+                techInfo.startmap = new Array<String>();
+                for(startmapElement in techInfoElement.elementsNamed("startmap")) {
+                    techInfo.startmap.push( startmapElement.firstChild().nodeValue.trim() );
+                }
+            }
+
             db.set( id, {
                 id: id, 
                 title: titleText, 
@@ -69,9 +90,21 @@ class Database {
                 description: description, 
                 date: date, 
                 size: size, 
-                rating: rating
+                rating: rating,
+                techinfo: techInfo
             } );
         }
+
+        // DEBUG TESTS
+        // var debugCount = 0;
+        // for (mapData in db) {
+        //     Downloader.getModInstallFolderSuffix(mapData);
+        //     debugCount++;
+        //     if ( debugCount > 256) {
+        //         break;
+        //     }
+        // }
+        // trace("suffix test complete!");
     }
 
     public static function getMonthName(monthNumber:Int) {
@@ -135,11 +168,11 @@ typedef MapEntry = {
     var ?rating:Float;
     var ?authors:Array<String>;
 
-    var ?techInfo:TechInfo;
+    var ?techinfo:TechInfo;
 }
 
 typedef TechInfo = {
-    var zipbasedir:String;
+    var ?zipbasedir:String;
     var ?commandline:String;
     var ?startmap:Array<String>;
     var ?requirements:Array<String>;

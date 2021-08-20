@@ -24,9 +24,10 @@ class UserState {
     }
 
     public function queueMap(mapID:String) {
-        if ( !currentData.mapQueue.contains(mapID) )
+        if ( !currentData.mapQueue.contains(mapID) ) {
             currentData.mapQueue.push(mapID);
-        // TODO: display in event log?
+            Downloader.instance.queueMapDownload( Database.instance.db[mapID] );
+        }
         saveUser(currentData);
     }
 

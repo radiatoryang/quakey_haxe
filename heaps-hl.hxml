@@ -3,9 +3,12 @@
 
 -lib heaps
 -lib hlsdl
+
 -lib haxeui-core
 -lib haxeui-heaps
+
 -lib datetime
+-lib haxe-files
 
 -D resourcesPath=assets
 -D windowTitle=Quakey

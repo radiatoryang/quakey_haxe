@@ -1,5 +1,7 @@
 package;
 
+import haxe.zip.Entry;
+import haxe.io.BytesInput;
 import Database.MapEntry;
 import haxe.ui.ToolkitAssets;
 import sys.FileSystem;
@@ -10,6 +12,7 @@ import format.zip.Reader;
 
 import hxd.res.Loader;
 import haxe.ui.backend.heaps.TileCache;
+import hx.files.Dir;
 
 using StringTools;
 
@@ -45,6 +48,17 @@ class Downloader {
 
     public function queueMapDownload(mapData:MapEntry) {
         if ( !isMapDownloaded(mapData.id) ) {
+            // download dependencies too
+            if ( mapData.techinfo != null && mapData.techinfo.requirements != null) {
+                for( dependency in mapData.techinfo.requirements ) {
+                    if ( Database.instance.db.exists(dependency) ) {
+                        queueMapDownload( Database.instance.db[dependency] );
+                    } else {
+                        trace( 'error; cannot find requirement with ID:$dependency -- this is a problem in the XML, please tell Quaddicted to fix this!');
+                    }
+                }
+            }
+            // download actual mod btw
             downloadThreadPool.run( () -> { downloadMapAsync(mapData.id, mapData.md5sum); } );
         } else {
             var mapID = mapData.id;
@@ -84,11 +98,150 @@ class Downloader {
 
     public function onDownloadMapSuccess(mapID:String) {
         Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
-        // TODO: unzip and install
+
+        // TODO: thread this in background?
+        // installModAsync( Database.instance.db[mapID] );
     }
 
     public function onDownloadMapError(mapID:String, error:String) {
         Notify.instance.addNotify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
+    }
+
+    public static function getModInstallFolder(mapData:MapEntry) {
+        // we repackage all quakey mods with "quakey_" prefix to avoid breaking Quake installations or anything
+        // the process for deciding what folder to put the mapData in:
+        // 1. TODO: manual user override for where to put it
+        // 2. try to use getModInstallFolderSuffix()
+        return UserState.instance.currentData.quakePath + "/quakey_" + getModInstallFolderSuffix(mapData);
+    }
+
+    public static function getModInstallFolderSuffix(mapData:MapEntry) {
+        // process for generating a mod folder suffix
+        // 1. look for any "-game" command line ... this is good for most modern Quake packages (what most people will play)
+        // 2. then check the zipbasedir .. this is good for most old map packs (1000+ items) that all use "id1/maps/"
+        // 3. TODO: if both of those fail, then do this the hard way -- scan the .zip and look for root folder of any .dat or .pak or .bsp
+        // 4. if all above fail, use the mapData.id
+
+        // this process must be deterministic and reliable
+        // the original idea was to just install everything in its own folder?
+        // but we have to do this complicated process because some Quaddicted packages can go together
+        // even though they're not always marked-up as "requirements" in the XML
+        // and the only way you know they go together is if they just happen to share the same root mod folder
+
+        
+        var installSuffix = mapData.id; // default to the Quaddicted map ID
+        var zipBaseDir = "";
+        var foundGoodSuffix = false;
+        // trace('getModInstallFolderSuffix for $installSuffix ...');
+
+        if ( mapData.techinfo != null ) {
+            // first, look for a "-game" commandline, e.g. "-game copper" but also possibly like "-hipnotic -game actualModName"
+            if (mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-game")) {
+                var cmdLineClean = mapData.techinfo.commandline.trim();
+                trace('getModInstallFolderSuffix scanning for gamedir in $cmdLineClean ...');
+                while ( cmdLineClean.contains("  ") ) { // take no chances with extra whitespace
+                    cmdLineClean.replace("  ", " ");
+                }
+                var cmdLineParts = cmdLineClean.split(" ");
+                for ( i in 0...cmdLineParts.length) {
+                    if (cmdLineParts[i].contains("-game") && cmdLineParts.length > i+1 && cmdLineParts[i+1].trim().length > 0) {
+                        installSuffix = cmdLineParts[i+1].trim();
+                        foundGoodSuffix = true;
+                        break;
+                    }
+                }
+            }
+            // second, look for a zipbasedir ... e.g. "id1/maps/" or "/id1/maps" or "id1/" or "copper" etc.
+            else if (mapData.techinfo.zipbasedir != null && mapData.techinfo.zipbasedir.replace("/", "").trim().length > 0) {
+                var zipClean = mapData.techinfo.zipbasedir.trim();
+                trace('getModInstallFolderSuffix scanning for gamedir in $zipClean ...');
+                zipClean = zipClean.replace(" ", "").replace("\\", "/"); // take no chances with white space or slashes
+                while ( zipClean.startsWith("/") ) {
+                    zipClean = zipClean.substr(1); // no slash at the beginning
+                }
+                var zipCleanParts = zipClean.split("/");
+                for( part in zipCleanParts ) {
+                    if ( part != "maps" && part.length > 0 ) {
+                        installSuffix = part;
+                        foundGoodSuffix = true;
+                        break;
+                    }
+                }
+            }
+            else if ( mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-nehahra") ) {
+                installSuffix = "nehahra";
+                foundGoodSuffix = true;
+            }
+            else if ( mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-quoth") ) {
+                installSuffix = "quoth";
+                foundGoodSuffix = true;
+            }
+            else if ( mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-hipnotic") ) {
+                installSuffix = "hipnotic";
+                foundGoodSuffix = true;
+            }
+        }
+
+        // TODO: try the hard way, and scan the .zip ... e.g. gsh_tod, soeskins_glquake
+        if ( !foundGoodSuffix ) {
+
+        }
+
+        trace('getModInstallFolderSuffix for ' + mapData.id + ' is $installSuffix ... foundGoodSuffix: $foundGoodSuffix');
+        return installSuffix;
+    }
+
+    public function installModAsync(mapData:MapEntry) {
+        // if no template folder found, need to help user troubleshoot and set TEMPLATE_PATH?
+        if ( !FileSystem.exists(getFullPath(Main.TEMPLATE_PATH) )) {
+            Notify.instance.addNotify( mapData.id, "no Quake folder template was found at " + getFullPath(Main.TEMPLATE_PATH) + " so can't install " + mapData.title);
+            return;
+        }
+
+        var newInstallFolder = getModInstallFolder(mapData);
+
+        if ( !FileSystem.exists(newInstallFolder))
+            FileSystem.createDirectory( newInstallFolder );
+        var newMapsFolder = newInstallFolder + "/maps";
+        if ( !FileSystem.exists(newMapsFolder))
+            FileSystem.createDirectory( newMapsFolder );
+
+        var unzipRoot = newInstallFolder;
+
+        var zipBaseDir = mapData.techinfo != null ? mapData.techinfo.zipbasedir : null;
+        if ( zipBaseDir != null && zipBaseDir.contains("maps") ) {
+            unzipRoot = newMapsFolder;
+        }
+
+        // copy over template files
+        var templateDir = Dir.of( getFullPath(Main.TEMPLATE_PATH));
+        templateDir.copyTo(newInstallFolder, [DirCopyOption.OVERWRITE, DirCopyOption.MERGE]);
+        trace("successfully copied base template files over to " + newInstallFolder);
+
+        // unzip everything
+        // TODO: unzip all dependencies first?
+        unzip( getFullPath(Main.DOWNLOAD_PATH + "/" + mapData.id + ".zip"), unzipRoot );
+        trace("successfully unzipped " + mapData.id + " to " + unzipRoot );
+
+        // TODO: repackage phase: move all mod subfolders up one level
+        
+    }
+
+    public static function unzip(unzipFilePath:String, localUnzipPath:String) {
+        var zipfileBytes = File.getBytes(unzipFilePath);
+        var bytesInput = new BytesInput(zipfileBytes);
+        var reader = new Reader(bytesInput);
+        var entries:List<Entry> = reader.read();
+        for (_entry in entries) {
+            var data = Reader.unzip(_entry);
+            if (_entry.fileName.substring(_entry.fileName.lastIndexOf('/') + 1) == '' && _entry.data.toString() == '') {
+                sys.FileSystem.createDirectory(localUnzipPath + _entry.fileName);
+            } else {
+                var f = File.write(localUnzipPath + _entry.fileName, true);
+                f.write(data);
+                f.close();
+            }
+        }
     }
 
     public function getImageAsync(filename:String, callback:String->Void) {
