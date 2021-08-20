@@ -68,20 +68,27 @@ class Downloader {
         http.onBytes = function(bytes) { 
             var md5 = MD5.make(bytes).toHex();
             if ( md5 != expectedMd5 ) {
-                trace('map download failed for $mapID because file is corrupted; expected checksum $expectedMd5 ... but I have $md5 ?!');
+                Notify.instance.addNotify(mapID, "error: file was corrupted for " + Database.instance.db[mapID].title );
                 return;
             }
 
             File.saveBytes(fullPath, bytes);
             trace('successfully downloaded $mapID to $fullPath !');
-            // Main.mainThread.events.run( () -> { callback(localPath); } );
+            Main.mainThread.events.run( () -> { onDownloadMapSuccess(mapID); } );
         }
         http.onError = function(status) { 
-            // TODO: queue another request later on?
-            trace("download error: " + status); 
+            Main.mainThread.events.run( () -> { onDownloadMapError(mapID, status); } );
         }
         http.request();
+    }
 
+    public function onDownloadMapSuccess(mapID:String) {
+        Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
+        // TODO: unzip and install
+    }
+
+    public function onDownloadMapError(mapID:String, error:String) {
+        Notify.instance.addNotify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
     }
 
     public function getImageAsync(filename:String, callback:String->Void) {
@@ -118,6 +125,11 @@ class Downloader {
 
     /* returns filepath string if the image filepath is valid */
     public function allocateAndCacheImage(filepath:String) {
+        // is image already cached?
+        if ( TileCache.exists(filepath) ) {
+            return filepath;
+        }
+
         // double check the file exists
         if ( !localLoader.exists(filepath) ) {
             return null;
@@ -132,10 +144,6 @@ class Downloader {
         }
 
         cacheImage(filepath, data.toImage() );
-
-        // hxd.Res.loader = localLoader;
-        // ToolkitAssets.instance.getImage(filepath, null); 
-        // hxd.Res.loader = embedLoader;
 
         return filepath;
     }

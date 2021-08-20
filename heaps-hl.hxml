@@ -5,6 +5,7 @@
 -lib hlsdl
 -lib haxeui-core
 -lib haxeui-heaps
+-lib datetime
 
 -D resourcesPath=assets
 -D windowTitle=Quakey

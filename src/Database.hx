@@ -1,5 +1,6 @@
 package ;
 
+import datetime.DateTime;
 import sys.io.File;
 
 using StringTools;
@@ -53,7 +54,7 @@ class Database {
 
             for (dateString in file.elementsNamed("date")) {
                 var dateData = dateString.firstChild().nodeValue.trim().split(".");
-                date = Date.fromString(dateData[2] + "-" + dateData[1] + "-" + dateData[0]);
+                date = DateTime.fromString(dateData[2] + "-" + dateData[1] + "-" + dateData[0]);
             }
 
             for (sizeString in file.elementsNamed("size")) {
@@ -72,9 +73,44 @@ class Database {
             } );
         }
     }
+
+    public static function getMonthName(monthNumber:Int) {
+        return switch( monthNumber ) {
+            case January: return "January";
+            case February: return "February";
+            case March: return "March";
+            case April: return "April";
+            case May: return "May";
+            case June: return "June";
+            case July: return "July";
+            case August: return "August";
+            case September: return "September";
+            case October: return "October";
+            case November: return "November";
+            case December: return "December";
+            default: return Std.string(monthNumber);
+        }
+    }
     
-    public static inline function getTotalDays(date:Date) {
-        return date.getFullYear() * 365 + date.getMonth() * 31 + date.getDate();
+    public static inline function getTotalDays(date:DateTime) {
+        return date.getYear() * 365 + date.getMonth() * 31 + date.getDay();
+    }
+
+    public static function getRelativeTime(date:DateTime) {
+        var now = DateTime.local();
+        var span = now - date;
+
+        if ( span.getTotalMonths() > 1 ) {
+            return span.formatPartial(['%y years', '%m months']).join(', ') + " ago";
+        } else if ( span.getTotalDays() > 24 ) {
+            return span.format("%d days ago");
+        } else if ( span.getTotalHours() > 1 ) {
+            return span.format("%h hours ago");
+        } else if ( span.getTotalMinutes() > 1) {
+            return span.format("%i minutes ago");
+        } else {
+            return "just now";
+        }
     }
 
     public function getMapStatus(mapID:String) {
@@ -94,7 +130,7 @@ typedef MapEntry = {
     
     var ?md5sum:String;
     var ?size:Float;
-    var ?date:Date;
+    var ?date:DateTime;
     var ?description:String;
     var ?rating:Float;
     var ?authors:Array<String>;

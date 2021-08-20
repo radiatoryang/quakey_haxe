@@ -4,7 +4,6 @@ import Database.MapEntry;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.components.Button;
 using StringTools;
-using DateTools;
 
 class MapButton extends Button {
 
@@ -34,7 +33,7 @@ class MapButton extends Button {
         // uiTitle.opacity = 0.5;
         addComponent(uiTitle);
 
-        tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others\n" : "\n" ) + (mapData.date != null ? mapData.date.format(" %d %B %Y") : " ");
+        tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others" : "" ) + (mapData.date != null ? mapData.date.format(" (%Y)") : "");
         borderSize = 0;
 
         Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );

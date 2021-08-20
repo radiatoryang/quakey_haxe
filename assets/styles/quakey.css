@@ -21,6 +21,14 @@
     font-size: 32px; padding-left: 32px; padding-top: 16px; font-weight: bold;
 }
 
+.mediumText {
+    font-size: 16px;
+}
+
+.smallText {
+    font-size: 12px;
+}
+
 .button {
     background-color: #363020;
     border-size: 2;

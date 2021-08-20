@@ -1,5 +1,6 @@
 package ;
 
+import datetime.utils.DateTimeMonthUtils;
 import haxe.ui.core.Screen;
 import Database.MapEntry;
 import Database.MapStatus;
@@ -16,7 +17,7 @@ import haxe.ui.components.Label;
 import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
 
-using DateTools;
+import datetime.DateTime;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/map-profile.xml"))
 class MapProfile extends VBox {
@@ -53,7 +54,8 @@ class MapProfile extends VBox {
         }
 
         var date = findComponent("date", Label);
-        date.text = mapData.date != null ? mapData.date.format(" %d %B %Y") : " ";
+        var month = Database.getMonthName( mapData.date.getMonth() );
+        date.text = mapData.date != null ? mapData.date.format(' %d $month %Y') : " ";
         if ( mapData.size != null && mapData.size > 0) {
             date.text += "    " + Std.string(mapData.size) + "mb";
         }
@@ -78,6 +80,7 @@ class MapProfile extends VBox {
             }
         }
         date.filter = textFilter;
+        date.tooltip = Database.getRelativeTime(mapData.date);
 
         var description = findComponent("description", Label);
         description.text = mapData.description;
@@ -174,6 +177,6 @@ class MapProfile extends VBox {
         mapProfile.refresh();
 
         // temp for testing
-        Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
+        // Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
     }
 }
