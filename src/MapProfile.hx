@@ -92,10 +92,19 @@ class MapProfile extends VBox {
 
      /** mainly for refreshing the buttons on the map profile page; nothing else really changes **/
     public function refresh() {
-        buttonQueue.text = switch( Database.instance.getMapStatus( mapData.id) ) {
-            case NotQueued: "QUEUE DOWNLOAD";
-            case Queued: "DOWNLOADING...";
-            case Downloaded: "INSTALL AND PLAY";
+        switch( Database.instance.getMapStatus(mapData.id) ) {
+            case NotQueued: 
+                buttonQueue.text = "QUEUE DOWNLOAD";
+                buttonQueue.disabled = false;
+            case Queued: 
+                buttonQueue.text = "DOWNLOADING...";
+                buttonQueue.disabled = true;
+            case Downloaded: 
+                buttonQueue.text = "INSTALLING...";
+                buttonQueue.disabled = true;
+            case Installed: 
+                buttonQueue.text =  "PLAY >";
+                buttonQueue.disabled = false;
         }
     }
 
@@ -131,17 +140,19 @@ class MapProfile extends VBox {
 
     @:bind(buttonQueue, MouseEvent.CLICK)
     private function onQueueButton(e:MouseEvent) {
-        var status = Database.instance.getMapStatus( mapData.id);
-        if ( status == MapStatus.NotQueued ) {
-            Notify.instance.addNotify(mapData.id, "queued " + mapData.title + " for download");
-            UserState.instance.queueMap( mapData.id );
-            MainView.instance.refreshQueue();
-        } else if ( status == MapStatus.Downloaded ) {
-            // TODO: install and launch map?
-        } else { 
-            // do nothing, map is already queued and downloading
-            // TODO... make it prioritize the download?
+        switch( Database.instance.getMapStatus(mapData.id) ) {
+            case NotQueued: 
+                Notify.instance.addNotify(mapData.id, "queued " + mapData.title + " for download");
+                UserState.instance.queueMap( mapData.id );
+                MainView.instance.refreshQueue();
+            case Installed: 
+                buttonQueue.text =  "PLAY >";
+                buttonQueue.disabled = false;
+                Launcher.launch(mapData);
+            default:
+                // do nothing
         }
+
         refresh();
     }
 

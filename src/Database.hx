@@ -147,7 +147,9 @@ class Database {
     }
 
     public function getMapStatus(mapID:String) {
-        if ( Downloader.instance.isMapDownloaded(mapID) ) {
+        if ( Downloader.isModInstalled(mapID) ) {
+            return MapStatus.Installed;
+        } else if ( Downloader.isMapDownloaded(mapID) ) {
             return MapStatus.Downloaded;
         } else if (UserState.instance.isMapQueued(mapID) ) {
             return MapStatus.Queued;
@@ -182,4 +184,5 @@ enum MapStatus {
     NotQueued;
     Queued;
     Downloaded;
+    Installed;
 }
