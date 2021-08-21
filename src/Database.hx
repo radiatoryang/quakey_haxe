@@ -151,6 +151,8 @@ class Database {
             return MapStatus.Installed;
         } else if ( Downloader.isMapDownloaded(mapID) ) {
             return MapStatus.Downloaded;
+        } else if ( mapID == Downloader.instance.currentMapDownloadID ) {
+            return MapStatus.Downloading;
         } else if (UserState.instance.isMapQueued(mapID) ) {
             return MapStatus.Queued;
         } else {
@@ -171,6 +173,9 @@ typedef MapEntry = {
     var ?authors:Array<String>;
 
     var ?techinfo:TechInfo;
+
+    // extra info, diverges away from XML file format
+    var ?links:Array<String>;
 }
 
 typedef TechInfo = {
@@ -183,6 +188,7 @@ typedef TechInfo = {
 enum MapStatus {
     NotQueued;
     Queued;
+    Downloading;
     Downloaded;
     Installed;
 }

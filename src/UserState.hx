@@ -24,6 +24,13 @@ class UserState {
         }
     }
 
+    public function moveMapToFrontOfQueue(mapID:String) {
+        if ( currentData.mapQueue.contains(mapID) ) {
+            currentData.mapQueue.remove(mapID);
+        }
+        currentData.mapQueue.unshift(mapID);
+    }
+
     public function queueMap(mapID:String) {
         if ( !currentData.mapQueue.contains(mapID) ) {
             currentData.mapQueue.push(mapID);

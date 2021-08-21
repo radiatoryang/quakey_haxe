@@ -48,8 +48,12 @@ class Launcher {
             args.push("+map " + startmap);
         }
 
-        trace("launching: " + quakeExePath + " " + args.join(" "));
-        currentProcess = new Process(quakeExePath + " " + args.join(" "));
+        trace("launching: " + quakeExePath + args.join(" "));
+        currentProcess = new Process(quakeExePath + args.join(" "));
+    }
+
+    public static function openInExplorer(filepath:String) {
+        Sys.command("start " + filepath);
     }
 
     static function getMapListFromDisk(mapData:MapEntry) {

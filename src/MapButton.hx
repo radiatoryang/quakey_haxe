@@ -1,5 +1,7 @@
 package;
 
+import Database.MapStatus;
+import haxe.ui.components.Label;
 import Database.MapEntry;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.components.Button;
@@ -10,7 +12,7 @@ class MapButton extends Button {
     public var mapData:MapEntry;
 
     var uiTitle:LabelOutlined;
-    // var uiBody:Label;
+    var uiState:Label;
 
     public function new() {
         super();
@@ -18,9 +20,6 @@ class MapButton extends Button {
         width = 300;
         height = 225;
         includeInLayout = true;
-
-        // uiBody = new Label();
-        // addComponent(uiBody);
     }
 
     public override function onInitialize() {
@@ -33,8 +32,14 @@ class MapButton extends Button {
         // uiTitle.opacity = 0.5;
         addComponent(uiTitle);
 
+        uiState = new Label();
+        uiState.addClass("badge");
+        addComponent(uiState);
+
         tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others" : "" ) + (mapData.date != null ? mapData.date.format(" (%Y)") : "");
         borderSize = 0;
+
+        refreshMapButton();
 
         Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
     }
@@ -46,23 +51,20 @@ class MapButton extends Button {
             backgroundImage = filepath;
     }
 
-
-    // @:access(ToolkitAssets)
-    // function cacheImage(filepath:String, resourceID:String) {
-     //    var loader = new hxd.res.Loader(new hxd.fs.LocalFileSystem(Main.BASE_DIR, ""));
-    //     var imageInfo = loader.load(filepath).toImage().getInfo();
-    //     ToolkitAssets.instance._imageCache.set(resourceID, imageInfo);
-    // }
+    public function refreshMapButton() {
+        var state = Database.instance.getMapStatus(mapData.id);
+        uiState.text = switch(state) {
+            case NotQueued: "";
+            case Queued: "DOWNLOADING...";
+            case Downloaded: "INSTALLING...";
+            case Installed: "READY TO PLAY";
+        }
+        uiState.hidden = uiState.text == "";
+    }
 
     @:bind(this, MouseEvent.CLICK)
     function onMapClick(e) {
         MapProfile.openMapProfile( mapData );
     }    
-
-    // function set_nodeBody(newNodeBody) {
-    //     nodeBody = newNodeBody;
-    //     uiBody.text = newNodeBody;
-    //     return newNodeBody;
-    // }
 
 }

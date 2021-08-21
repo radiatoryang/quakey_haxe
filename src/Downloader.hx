@@ -1,5 +1,6 @@
 package;
 
+import haxe.Http;
 import haxe.io.Path;
 import haxe.display.Display.Package;
 import haxe.zip.Entry;
@@ -25,6 +26,10 @@ class Downloader {
     var downloadThreadPool: ElasticThreadPool; // ZIP files
     var threadPool: ElasticThreadPool; // XML,  images
     var localLoader:Loader;
+
+    var currentMapDownload: Http;
+    public var currentMapDownloadID(default, null):String;
+    // public var currentMapDownloadProgress
 
     public static function init() {
         instance = new Downloader();
@@ -92,8 +97,10 @@ class Downloader {
 
         var fullPath = getFullPath(Main.DOWNLOAD_PATH + "/" + mapID + ".zip");
         var url = "https://www.quaddicted.com/filebase/" + mapID + ".zip";
-        var http = new haxe.Http(url);
-        http.onBytes = function(bytes) { 
+        currentMapDownloadID = mapID;
+        Main.mainThread.events.run( () -> { MainView.instance.refreshAllMapButtons(); } );
+        currentMapDownload = new haxe.Http(url);
+        currentMapDownload.onBytes = function(bytes) { 
             var md5 = MD5.make(bytes).toHex();
             if ( md5 != expectedMd5 ) {
                 Notify.instance.addNotify(mapID, "error: file was corrupted for " + Database.instance.db[mapID].title );
@@ -104,19 +111,21 @@ class Downloader {
             trace('successfully downloaded $mapID to $fullPath !');
             Main.mainThread.events.run( () -> { onDownloadMapSuccess(mapID, mapIDToTryToInstall); } );
         }
-        http.onError = function(status) { 
+        currentMapDownload.onError = function(status) { 
             Main.mainThread.events.run( () -> { onDownloadMapError(mapID, status); } );
         }
-        http.request();
+        currentMapDownload.request();
     }
 
     public function onDownloadMapSuccess(mapID:String, ?mapIDToTryToInstall:String) {
+        currentMapDownloadID = "";
         Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
 
         queueMapInstall( Database.instance.db[mapIDToTryToInstall != null ? mapIDToTryToInstall : mapID], mapIDToTryToInstall == null );
     }
 
     public function onDownloadMapError(mapID:String, error:String) {
+        currentMapDownloadID = "";
         Notify.instance.addNotify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
     }
 
@@ -289,9 +298,11 @@ class Downloader {
         // unzip actual mod now
         unzip( getFullPath( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + mapData.id + ".zip"), unzipRoot );
         trace("successfully unzipped " + mapData.id + " to " + unzipRoot );
+        MainView.instance.refreshAllMapButtons();
     }
 
     public static function unzip(zipFilePath:String, localUnzipPath:String, tryToRepackageToRoot:Bool=true) {
+        trace("beginning to unzip " + zipFilePath);
         var zipfileBytes = File.getBytes(zipFilePath);
         var bytesInput = new BytesInput(zipfileBytes);
         var reader = new Reader(bytesInput);
@@ -330,6 +341,8 @@ class Downloader {
             }
             // trace("unzip " + _entry.fileName + " >> " + finalUnzipPath[_entry.fileName]);
         }
+
+        bytesInput.close();
         return entries;
     }
 

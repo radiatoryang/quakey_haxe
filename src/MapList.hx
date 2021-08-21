@@ -33,6 +33,12 @@ class MapList extends VBox {
         mapButtons.push(newButton);
     }
 
+    public function refreshMapButtons() {
+        for( mapButton in mapButtons) {
+            mapButton.refreshMapButton();
+        }
+    }
+
     public function destroyMapButtons() {
         while ( mapButtons.length > 0) {
             var mapButton = mapButtons.pop();

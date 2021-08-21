@@ -54,6 +54,12 @@
     background-color: #544d3d;
 }
 
+.badge {
+    background-color: #993311;
+    padding: 4px;
+    font-size: 16px;
+}
+
 .scrollview {
     background-color: transparent;
 }

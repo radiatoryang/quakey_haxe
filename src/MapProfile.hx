@@ -56,9 +56,20 @@ class MapProfile extends VBox {
         var date = findComponent("date", Label);
         var month = Database.getMonthName( mapData.date.getMonth() );
         date.text = mapData.date != null ? mapData.date.format(' %d $month %Y') : " ";
+
+        // DISPLAY FILE SIZE
         if ( mapData.size != null && mapData.size > 0) {
             date.text += "    " + Std.string(mapData.size) + "mb";
         }
+        if ( mapData.techinfo != null && mapData.techinfo.requirements != null && mapData.techinfo.requirements.length > 0 ) {
+            var dependencySize = 0.0;
+            for( dependency in mapData.techinfo.requirements ) {
+                dependencySize += Database.instance.db[dependency].size;
+            }
+            date.text += " (+ dependencies: " + Std.string(mapData.size) + "mb)";
+        }
+
+        // DISPLAY RATING
         if ( mapData.rating != null && mapData.rating > 0) {
             date.text += "    " + Std.string( Math.round(Math.sqrt(mapData.rating * 0.2) * 100) ) + "%";
             if ( mapData.rating >= 4.75 ) {
@@ -97,6 +108,9 @@ class MapProfile extends VBox {
                 buttonQueue.text = "QUEUE DOWNLOAD";
                 buttonQueue.disabled = false;
             case Queued: 
+                buttonQueue.text = "QUEUED...";
+                buttonQueue.disabled = true;
+            case Downloading: 
                 buttonQueue.text = "DOWNLOADING...";
                 buttonQueue.disabled = true;
             case Downloaded: 
@@ -148,6 +162,8 @@ class MapProfile extends VBox {
             case Installed: 
                 buttonQueue.text =  "PLAY >";
                 buttonQueue.disabled = false;
+                UserState.instance.moveMapToFrontOfQueue( mapData.id );
+                MainView.instance.refreshQueue();
                 Launcher.launch(mapData);
             default:
                 // do nothing

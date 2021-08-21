@@ -7,6 +7,7 @@ import haxe.ui.events.MouseEvent;
 class MainView extends VBox {
 
     public static var instance:MainView;
+    var mapLists:Array<MapList> = new Array<MapList>();
 
     public function new() {
         super();
@@ -15,6 +16,7 @@ class MainView extends VBox {
 
     override function onInitialize() {
         refreshQueue();
+        mapLists.push( findComponent("queue") );
 
         var newReleases = findComponent("newReleases", MapList);
         var latest = Lambda.array(Database.instance.db);
@@ -22,6 +24,7 @@ class MainView extends VBox {
         for( i in 0...8 ) {
             newReleases.addMapButton( latest[i] );
         }
+        mapLists.push(newReleases);
         
         var rated = Lambda.array(Database.instance.db);
 
@@ -32,12 +35,20 @@ class MainView extends VBox {
         for( i in 0... 8) {
             highlyRated.addMapButton( ratedModern[i] );
         }
+        mapLists.push(highlyRated);
 
         var highlyRatedOld = findComponent("highlyRatedOld", MapList);
         var ratedClassic = rated.filter( map -> map.rating >= 4.0 && map.date.getYear() < 2010 );
         hxd.Rand.create().shuffle(ratedClassic);
         for( i in 0... 8) {
             highlyRatedOld.addMapButton( ratedClassic[i] );
+        }
+        mapLists.push(highlyRatedOld);
+    }
+
+    public function refreshAllMapButtons() {
+        for( list in mapLists) {
+            list.refreshMapButtons();
         }
     }
 
@@ -47,6 +58,7 @@ class MainView extends VBox {
 
         if ( UserState.instance.currentData.mapQueue == null)
             return;
+
         for( queuedMapID in UserState.instance.currentData.mapQueue ) {
             queue.addMapButton( Database.instance.db[queuedMapID] );
         }

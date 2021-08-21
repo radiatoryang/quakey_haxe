@@ -72,7 +72,13 @@ class Main {
             app.addComponent( Notify.init() );
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
+            hxd.Window.getInstance().onClose = onExit;
         });
+    }
+
+    public static function onExit() {
+        trace("exiting Quakey!");
+        return true;
     }
 
 
