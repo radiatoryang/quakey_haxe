@@ -1,6 +1,5 @@
 package ;
 
-import haxe.ui.styles.animation.util.Actuator;
 import haxe.ui.components.Button;
 import haxe.ui.containers.HBox;
 import haxe.ui.components.Label;
@@ -13,6 +12,7 @@ using DateTools;
 @:build(haxe.ui.ComponentBuilder.build("assets/map-list.xml"))
 class MapList extends VBox {
     public var mapListName:String = "NEW LIST";
+    public var mapListDescription:String = "DESCRIPTION";
     var mapButtons:Array<MapButton> = new Array<MapButton>();
     // public var listContents:HBox;
 
@@ -24,6 +24,12 @@ class MapList extends VBox {
         super.onInitialize();
         listContents = findComponent("listContents", HBox);
         findComponent("listName", Label).text = mapListName;
+        updateDescription( mapListDescription );
+    }
+
+    public function updateDescription(newDescription:String) {
+        mapListDescription = newDescription;
+        findComponent("listDescription", Label).text = mapListDescription;
     }
 
     public function addMapButton(mapData:MapEntry) {
@@ -31,12 +37,6 @@ class MapList extends VBox {
         newButton.mapData = mapData;
         listContents.addComponent(newButton);
         mapButtons.push(newButton);
-    }
-
-    public function refreshMapButtons() {
-        for( mapButton in mapButtons) {
-            mapButton.refreshMapButton();
-        }
     }
 
     public function destroyMapButtons() {

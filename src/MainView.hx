@@ -7,7 +7,6 @@ import haxe.ui.events.MouseEvent;
 class MainView extends VBox {
 
     public static var instance:MainView;
-    var mapLists:Array<MapList> = new Array<MapList>();
 
     public function new() {
         super();
@@ -16,7 +15,7 @@ class MainView extends VBox {
 
     override function onInitialize() {
         refreshQueue();
-        mapLists.push( findComponent("queue") );
+        //mapLists.push( findComponent("queue") );
 
         var newReleases = findComponent("newReleases", MapList);
         var latest = Lambda.array(Database.instance.db);
@@ -24,7 +23,14 @@ class MainView extends VBox {
         for( i in 0...8 ) {
             newReleases.addMapButton( latest[i] );
         }
-        mapLists.push(newReleases);
+
+        var mostRecentDateIndex = 0; // idk how date generation or sorting works, but just doing this to be safe
+        while ( latest[mostRecentDateIndex].date == null ) {
+            mostRecentDateIndex++;
+        }
+        var recentMonth = Database.getMonthName( latest[mostRecentDateIndex].date.getMonth() );
+        newReleases.updateDescription("updated " + latest[mostRecentDateIndex].date.format('%d $recentMonth %Y') );
+        //mapLists.push(newReleases);
         
         var rated = Lambda.array(Database.instance.db);
 
@@ -35,7 +41,7 @@ class MainView extends VBox {
         for( i in 0... 8) {
             highlyRated.addMapButton( ratedModern[i] );
         }
-        mapLists.push(highlyRated);
+        //mapLists.push(highlyRated);
 
         var highlyRatedOld = findComponent("highlyRatedOld", MapList);
         var ratedClassic = rated.filter( map -> map.rating >= 4.0 && map.date.getYear() < 2010 );
@@ -43,14 +49,27 @@ class MainView extends VBox {
         for( i in 0... 8) {
             highlyRatedOld.addMapButton( ratedClassic[i] );
         }
-        mapLists.push(highlyRatedOld);
+        //mapLists.push(highlyRatedOld);
+
+        var ratedHard = rated.filter( map -> map.rating >= 3.0 && map.tags != null && map.tags.contains("hard") );
+        hxd.Rand.create().shuffle(ratedHard);
+        for( i in 0... 8) {
+            listHard.addMapButton( ratedHard[i] );
+        }
+
+        var ratedSewer = rated.filter( map -> map.rating >= 3.0 && map.tags != null && (map.tags.contains("sewer") || map.tags.contains("sewers") || map.tags.contains("cistern")) );
+        hxd.Rand.create().shuffle(ratedSewer);
+        for( i in 0... 8) {
+            listSewer.addMapButton( ratedSewer[i] );
+        }
+        //mapLists.push
     }
 
-    public function refreshAllMapButtons() {
-        for( list in mapLists) {
-            list.refreshMapButtons();
-        }
-    }
+    // public function refreshAllMapButtons() {
+    //     for( list in mapLists) {
+    //         list.refreshMapButtons();
+    //     }
+    // }
 
     public function refreshQueue() {
         var queue = findComponent("queue", MapList);
@@ -62,6 +81,8 @@ class MainView extends VBox {
         for( queuedMapID in UserState.instance.currentData.mapQueue ) {
             queue.addMapButton( Database.instance.db[queuedMapID] );
         }
+        queue.updateDescription(UserState.instance.currentData.mapQueue.length + " items");
+
         trace("queue is currently: " + UserState.instance.currentData.mapQueue.join(", "));
     }
     

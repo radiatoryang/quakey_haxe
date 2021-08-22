@@ -1,0 +1,4 @@
+<button styleName="mapButton">
+    <labeloutlined id="mapTitleText" padding="16" text="MAP TITLE" />
+    <label id="mapStateText" styleName="badge" text="MAP STATE" />
+</button>

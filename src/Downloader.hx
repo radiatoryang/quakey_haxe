@@ -1,5 +1,6 @@
 package;
 
+import haxe.Timer;
 import haxe.Http;
 import haxe.io.Path;
 import haxe.display.Display.Package;
@@ -26,10 +27,10 @@ class Downloader {
     var downloadThreadPool: ElasticThreadPool; // ZIP files
     var threadPool: ElasticThreadPool; // XML,  images
     var localLoader:Loader;
+    var refreshTimer:Timer;
 
-    var currentMapDownload: Http;
+    var currentMapDownload: HttpQuakey;
     public var currentMapDownloadID(default, null):String;
-    // public var currentMapDownloadProgress
 
     public static function init() {
         instance = new Downloader();
@@ -39,6 +40,20 @@ class Downloader {
         downloadThreadPool = new ElasticThreadPool(1, 5.0);
         threadPool = new ElasticThreadPool(1, 5.0); // need to keep this ThreadPool at 1 otherwise the CPU usage gets really intense
         localLoader = new hxd.res.Loader( new hxd.fs.LocalFileSystem(Main.BASE_DIR, "") );
+
+        refreshTimer = new Timer(1000);
+        refreshTimer.run = refresh;
+    }
+
+    function refresh() {
+        if (currentMapDownloadID != null && currentMapDownloadID.length > 0) { 
+            var state = Database.instance.refreshState(currentMapDownloadID); 
+            updateStatusBar("downloading " + Database.instance.db[currentMapDownloadID].title + " (" + Std.string(Math.round(state.downloadProgress * 100)) + "%)");
+        }
+    }
+
+    function updateStatusBar(newStatus:String = "") {
+        MainView.instance.menuBarStatus.text = newStatus;
     }
 
     static inline function getFullPath(localPath:String) {
@@ -56,22 +71,22 @@ class Downloader {
     public function queueMapDownload(mapData:MapEntry, ?mapIDToTryToInstall:String) {
         // download dependencies too
         if ( mapData.techinfo != null && mapData.techinfo.requirements != null) {
-            for( dependency in mapData.techinfo.requirements ) {
-                if ( Database.instance.db.exists(dependency) ) {
+            for( dependencyID in mapData.techinfo.requirements ) {
+                if ( Database.instance.db.exists(dependencyID) ) {
+                    var depend = Database.instance.db[dependencyID];
                     if ( mapIDToTryToInstall == null) {
                         mapIDToTryToInstall = mapData.id; // don't try to install dependencies as standalones
                     }
-                    trace( 'for ' + mapData.id + ', found dependency $dependency');
-                    queueMapDownload( Database.instance.db[dependency], mapIDToTryToInstall );
+                    queueMapDownload( depend, mapIDToTryToInstall );
                 } else {
-                    trace( 'ERROR! cannot find requirement with ID:$dependency -- this is a problem in the XML, please tell Quaddicted to fix this!');
+                    trace( 'ERROR! cannot find requirement with ID:$dependencyID -- this is a problem in the XML, please tell Quaddicted to fix this!');
                 }
             }
         }
         
         if ( !isMapDownloaded(mapData.id) ) {
+            Notify.instance.addNotify(mapData.id, "QUEUED FOR DOWNLOAD: " + mapData.title + " (required for " + mapData.title + ")" );
             downloadThreadPool.run( () -> { downloadMapAsync(mapData.id, mapData.md5sum, mapIDToTryToInstall); } );
-            trace( 'queued ' + mapData.id + " for download");
         } else {
             // TODO: wait for a while, and then queue install again?
             trace( 'map ' + mapData.id + ' was already downloaded');
@@ -95,11 +110,12 @@ class Downloader {
         if ( isMapDownloaded(mapID) )
             return;
 
+        trace('started downloading $mapID');
         var fullPath = getFullPath(Main.DOWNLOAD_PATH + "/" + mapID + ".zip");
         var url = "https://www.quaddicted.com/filebase/" + mapID + ".zip";
         currentMapDownloadID = mapID;
-        Main.mainThread.events.run( () -> { MainView.instance.refreshAllMapButtons(); } );
-        currentMapDownload = new haxe.Http(url);
+        // Main.mainThread.events.run( () -> { MainView.instance.refreshAllMapButtons(); } );
+        currentMapDownload = new HttpQuakey(url);
         currentMapDownload.onBytes = function(bytes) { 
             var md5 = MD5.make(bytes).toHex();
             if ( md5 != expectedMd5 ) {
@@ -108,6 +124,8 @@ class Downloader {
             }
 
             File.saveBytes(fullPath, bytes);
+            currentMapDownload.currentOutput.flush();
+            currentMapDownload.currentOutput.close();
             trace('successfully downloaded $mapID to $fullPath !');
             Main.mainThread.events.run( () -> { onDownloadMapSuccess(mapID, mapIDToTryToInstall); } );
         }
@@ -120,6 +138,7 @@ class Downloader {
     public function onDownloadMapSuccess(mapID:String, ?mapIDToTryToInstall:String) {
         currentMapDownloadID = "";
         Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
+        Database.instance.refreshState(mapID);
 
         queueMapInstall( Database.instance.db[mapIDToTryToInstall != null ? mapIDToTryToInstall : mapID], mapIDToTryToInstall == null );
     }
@@ -127,6 +146,19 @@ class Downloader {
     public function onDownloadMapError(mapID:String, error:String) {
         currentMapDownloadID = "";
         Notify.instance.addNotify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
+        Database.instance.refreshState(mapID);
+    }
+
+    /** returns -1 if no download, or 0.0-1.0 if there is a map download in progress **/
+    public function getCurrentMapDownloadProgress():Float {
+        if ( currentMapDownload == null || currentMapDownloadID == null || currentMapDownloadID == "" ) {
+            return -1;
+        }
+
+        var totalBytes = Database.instance.db[currentMapDownloadID].size * 1000000; 
+        var currentBytes = currentMapDownload.currentOutput.length;
+
+        return (currentBytes / totalBytes);
     }
 
     public static function isModInstalled(mapID:String) {
@@ -134,6 +166,7 @@ class Downloader {
         return FileSystem.exists( getModInstallFolder(mapData) );
     }
 
+    /** returns the FULL PATH to the mod install folder **/
     public static function getModInstallFolder(mapData:MapEntry, ?quakeExePath:String) {
         if ( quakeExePath == null)
             quakeExePath = UserState.instance.currentData.quakeExePath;
@@ -258,51 +291,69 @@ class Downloader {
     }
 
     public function installModAsync(mapData:MapEntry) {
-        // if no template folder found, need to help user troubleshoot and set TEMPLATE_PATH?
-        // if ( !FileSystem.exists(getFullPath(Main.TEMPLATE_PATH) )) {
-        //     Notify.instance.addNotify( mapData.id, "no Quake folder template was found at " + getFullPath(Main.TEMPLATE_PATH) + " so can't install " + mapData.title);
-        //     return;
-        // }
+        updateStatusBar("installing " + mapData.title + "...");
+        try {
+            // if no template folder found, need to help user troubleshoot and set TEMPLATE_PATH?
+            // if ( !FileSystem.exists(getFullPath(Main.TEMPLATE_PATH) )) {
+            //     Notify.instance.addNotify( mapData.id, "no Quake folder template was found at " + getFullPath(Main.TEMPLATE_PATH) + " so can't install " + mapData.title);
+            //     return;
+            // }
+            trace("installing " + mapData.id);
 
-        var newInstallFolder = getModInstallFolder(mapData); // this function takes all user preferences etc. into account
+            var newInstallFolder = getModInstallFolder(mapData); // this function takes all user preferences etc. into account
 
-        if ( !FileSystem.exists(newInstallFolder))
-            FileSystem.createDirectory( newInstallFolder );
-        var newMapsFolder = newInstallFolder + "maps/";
-        if ( !FileSystem.exists(newMapsFolder))
-            FileSystem.createDirectory( newMapsFolder );
+            if ( !FileSystem.exists(newInstallFolder))
+                FileSystem.createDirectory( newInstallFolder );
+            var newMapsFolder = newInstallFolder + "maps/";
+            if ( !FileSystem.exists(newMapsFolder))
+                FileSystem.createDirectory( newMapsFolder );
 
-        var unzipRoot = newInstallFolder;
+            var unzipRoot = newInstallFolder;
 
-        var zipBaseDir = mapData.techinfo != null ? mapData.techinfo.zipbasedir : null;
-        if ( zipBaseDir != null && zipBaseDir.contains("maps") ) {
-        //    trace("... must unzip this to /maps/!");
-            unzipRoot = newMapsFolder;
-        }
+            // copy over template files
+            // var templateDir = Dir.of( getFullPath(Main.TEMPLATE_PATH));
+            // templateDir.copyTo(newInstallFolder, [DirCopyOption.OVERWRITE, DirCopyOption.MERGE]);
+            // trace("successfully copied mod base template files over to " + newInstallFolder);
 
-        // copy over template files
-        // var templateDir = Dir.of( getFullPath(Main.TEMPLATE_PATH));
-        // templateDir.copyTo(newInstallFolder, [DirCopyOption.OVERWRITE, DirCopyOption.MERGE]);
-        // trace("successfully copied mod base template files over to " + newInstallFolder);
-
-        // unzip everything
-        // unzip all dependencies
-        if ( mapData.techinfo != null && mapData.techinfo.requirements != null && mapData.techinfo.requirements.length > 0) {
-            for( req in mapData.techinfo.requirements) {
-                if ( Downloader.isMapDownloaded(req)) {
-                    unzip( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + mapData.id + ".zip", unzipRoot );
+            // unzip all dependencies
+            if ( mapData.techinfo != null && mapData.techinfo.requirements != null && mapData.techinfo.requirements.length > 0) {
+                for( req in mapData.techinfo.requirements) {
+                    if ( Downloader.isMapDownloaded(req)) {
+                        unzip( getFullPath( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + req + ".zip"), unzipRoot, Database.instance.db[req] );
+                    }
                 }
             }
-        }
 
-        // unzip actual mod now
-        unzip( getFullPath( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + mapData.id + ".zip"), unzipRoot );
-        trace("successfully unzipped " + mapData.id + " to " + unzipRoot );
-        MainView.instance.refreshAllMapButtons();
+            // unzip actual mod now
+            unzip( getFullPath( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + mapData.id + ".zip"), unzipRoot, mapData );
+            trace("successfully unzipped " + mapData.id + " to " + unzipRoot );
+            Main.mainThread.events.run( () -> { onInstallMapSuccess(mapData.id); } );
+        } catch (e) {
+            Main.mainThread.events.run( () -> { onInstallMapError(mapData.id, e.message); } );
+            throw e;
+        }
     }
 
-    public static function unzip(zipFilePath:String, localUnzipPath:String, tryToRepackageToRoot:Bool=true) {
-        trace("beginning to unzip " + zipFilePath);
+    public function onInstallMapSuccess(mapID:String) {
+        updateStatusBar();
+        Notify.instance.addNotify(mapID, "finished installing " + Database.instance.db[mapID].title);
+        Database.instance.refreshState(mapID);
+    }
+
+    public function onInstallMapError(mapID:String, error:String) {
+        updateStatusBar();
+        Notify.instance.addNotify(mapID, 'install error ($error) ' + Database.instance.db[mapID].title );
+        Database.instance.refreshState(mapID);
+    }
+
+    public static function unzip(zipFilePath:String, localUnzipPath:String, mapData:MapEntry, tryToRepackageToRoot:Bool=true) {
+        // if package is meant to be unzipped to /maps/ based on XML data?
+        var zipBaseDir = mapData.techinfo != null ? mapData.techinfo.zipbasedir : null;
+        if ( zipBaseDir != null && zipBaseDir.contains("maps") ) {
+            localUnzipPath += Path.addTrailingSlash("maps");
+        }
+
+        // trace("beginning to unzip " + zipFilePath);
         var zipfileBytes = File.getBytes(zipFilePath);
         var bytesInput = new BytesInput(zipfileBytes);
         var reader = new Reader(bytesInput);
@@ -312,6 +363,7 @@ class Downloader {
         for( _entry in entries) {
             finalUnzipPath.set(_entry.fileName, _entry.fileName);
         }
+        // trace("ZIP file entries found!");
 
         // repackage phase: if the ZIP packaged its own embedded mod folder, we have to move all files up one level
         if ( tryToRepackageToRoot ) {
@@ -324,6 +376,7 @@ class Downloader {
                 }
             }
         }
+        // trace("repackage check done!");
 
         // actually unzip now
         for (_entry in entries) {
@@ -341,6 +394,7 @@ class Downloader {
             }
             // trace("unzip " + _entry.fileName + " >> " + finalUnzipPath[_entry.fileName]);
         }
+        // trace("unzip complete!");
 
         bytesInput.close();
         return entries;
@@ -378,6 +432,38 @@ class Downloader {
         }
 
         return rootModFolder;
+    }
+
+    public function tryDeleteAll(mapID:String) {
+        tryDeleteDownload(mapID);
+        tryDeleteInstall(mapID);
+    }
+
+    public function tryDeleteDownload(mapID:String) {
+        if ( isMapDownloaded(mapID) ) {
+            try {
+                FileSystem.deleteFile( getMapDownloadPath(mapID) );
+                Notify.instance.addNotify(mapID, "deleted " + getMapDownloadPath(mapID) );
+            } catch (e) {
+                Notify.instance.addNotify(mapID, "couldn't delete " + getMapDownloadPath(mapID) + " (" + e.message + ")" );
+            }
+        } else {
+            trace("tried to delete download " + mapID + ".zip but it was already deleted?");
+        }
+    }
+
+    public function tryDeleteInstall(mapID:String) {
+        if ( isModInstalled(mapID) ) {
+            try {
+                var dir = Dir.of( getModInstallFolder( Database.instance.db[mapID]) );
+                dir.delete(true);
+                Notify.instance.addNotify(mapID, "deleted " + getModInstallFolder( Database.instance.db[mapID]) );
+            } catch (e) {
+                Notify.instance.addNotify(mapID, "couldn't delete " + getModInstallFolder( Database.instance.db[mapID]) + " (" + e.message + ")" );
+            }
+        } else {
+            trace("tried to delete install /" + mapID + "/ but it was already deleted?");
+        }
     }
 
     public function getImageAsync(filename:String, callback:String->Void) {

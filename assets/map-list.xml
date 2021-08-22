@@ -1,5 +1,9 @@
 <vbox width="100%" height="320">
-    <label styleName="header" text="Map List Name" id="listName" />
+    <hbox width="100%">
+        <label styleName="header" text="Map List Name" id="listName" verticalAlign="bottom" />
+        <spacer width="8" />
+        <label text="Map List Description" id="listDescription" verticalAlign="bottom" paddingBottom="6" />
+    </hbox>
     <absolute width="100%" height="260">
         <scrollview id="mapScroll" styleName="mapList" width="100%" height="260" contentHeight="100%">
             <grid columns="1">

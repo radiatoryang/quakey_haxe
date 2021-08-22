@@ -29,21 +29,33 @@ class UserState {
             currentData.mapQueue.remove(mapID);
         }
         currentData.mapQueue.unshift(mapID);
+        MainView.instance.refreshQueue();
     }
 
     public function queueMap(mapID:String) {
         if ( !currentData.mapQueue.contains(mapID) ) {
             currentData.mapQueue.push(mapID);
             Downloader.instance.queueMapDownload( Database.instance.db[mapID] );
+            Notify.instance.addNotify(mapID, "QUEUED FOR DOWNLOAD AND INSTALL:\n" + Database.instance.db[mapID].title );
+            MainView.instance.refreshQueue();
         }
-        saveUser(currentData);
+        saveUser();
+    }
+
+    public function dequeueMap(mapID:String) {
+        if ( currentData.mapQueue.contains(mapID) ) {
+            currentData.mapQueue.remove(mapID);
+            Notify.instance.addNotify(mapID, "REMOVED FROM QUEUE:\n" + Database.instance.db[mapID].title );
+            MainView.instance.refreshQueue();
+        }
+        saveUser();
     }
 
     public function markMap(mapID:String) {
         if ( !currentData.mapComplete.contains(mapID) )
             currentData.mapComplete.push(mapID);
-        // TODO: display in event log?
-        saveUser(currentData);
+        Notify.instance.addNotify(mapID, "MARKED AS DONE:\n" + Database.instance.db[mapID].title );
+        saveUser();
     }
 
     public function isMapQueued(mapID:String):Bool {
@@ -75,7 +87,10 @@ class UserState {
         return newData;
     }
 
-    public static function saveUser(userData:UserData) {
+    public static function saveUser(?userData:UserData) {
+        if ( userData == null )
+            userData = UserState.instance.currentData;
+
         var username = userData.username; // TODO: sanitize user name for safety?
         if (!FileSystem.exists(Main.BASE_DIR + USER_DIR))
             FileSystem.createDirectory(Main.BASE_DIR + USER_DIR);

@@ -13,43 +13,48 @@ class Launcher {
     public static var currentProcess:Process;
 
     public static function launch(mapData:MapEntry, ?startmap:String, ?quakeExePath:String) {
-        if ( quakeExePath == null) {
-            quakeExePath = UserState.instance.currentData.quakeExePath;
-        }
-        if ( startmap == null ) {
-            if ( mapData.techinfo != null && mapData.techinfo.startmap != null && mapData.techinfo.startmap.length > 0 ) {
-                startmap = mapData.techinfo.startmap[0];
-            } else {
-                // get a list of all BSPs in /maps/ and select a startmap
-                var mapNames = getMapListFromDisk(mapData);
-                if ( mapNames != null) {
-                    if ( mapNames.contains("start") ) {
-                        startmap = "start";
-                    } else {
-                        mapNames.sort( sortAlphabetically );
-                        startmap = mapNames[0];
+        try {
+            if ( quakeExePath == null) {
+                quakeExePath = UserState.instance.currentData.quakeExePath;
+            }
+            if ( startmap == null ) {
+                if ( mapData.techinfo != null && mapData.techinfo.startmap != null && mapData.techinfo.startmap.length > 0 ) {
+                    startmap = mapData.techinfo.startmap[0];
+                } else {
+                    // get a list of all BSPs in /maps/ and select a startmap
+                    var mapNames = getMapListFromDisk(mapData);
+                    if ( mapNames != null) {
+                        if ( mapNames.contains("start") ) {
+                            startmap = "start";
+                        } else {
+                            mapNames.sort( sortAlphabetically );
+                            startmap = mapNames[0];
+                        }
                     }
                 }
             }
-        }
-        var quakeFolderPath = Path.addTrailingSlash( Path.directory( quakeExePath ) );
+            var quakeFolderPath = Path.addTrailingSlash( Path.directory( quakeExePath ) );
 
-        var args = new Array<String>(); 
-        
-        // get command line arguments from database, but strip any "-game" commands out
-        if (mapData.techinfo != null && mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-game")) {
-            args.push( stripGameCommandFromArguments(mapData.techinfo.commandline) );
-        }
+            var args = new Array<String>(); 
+            
+            // get command line arguments from database, but strip any "-game" commands out
+            if (mapData.techinfo != null && mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-game")) {
+                args.push( stripGameCommandFromArguments(mapData.techinfo.commandline) );
+            }
 
-        args.push("-basedir " + quakeFolderPath); // but older Quake engines don't support this?
-        args.push("-game " + Downloader.getModInstallFolderName(mapData) );
-        
-        if ( startmap != null) {
-            args.push("+map " + startmap);
-        }
+            args.push("-basedir " + quakeFolderPath); // but older Quake engines don't support this?
+            args.push("-game " + Downloader.getModInstallFolderName(mapData) );
+            
+            if ( startmap != null) {
+                args.push("+map " + startmap);
+            }
 
-        trace("launching: " + quakeExePath + args.join(" "));
-        currentProcess = new Process(quakeExePath + args.join(" "));
+            Notify.instance.addNotify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
+            currentProcess = new Process(quakeExePath + " " + args.join(" "));
+        } catch (e) {
+            Notify.instance.addNotify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
+            throw e;
+        }
     }
 
     public static function openInExplorer(filepath:String) {

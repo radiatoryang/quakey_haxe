@@ -2,6 +2,34 @@
     background-color: #201b0e;
 }
 
+#menuBar {
+    background-color: black;
+    width: 100%;
+    height: 48;
+}
+
+#menuBar .label {
+    margin-top: 12;
+}
+
+#menuBar .button {
+    width: 48;
+    height: 48;
+    border-size: 0;
+    background-color: black;
+    border-color: gray;
+    color: gray;
+}
+
+.mapProfile {
+    background-color: #201b0e;
+}
+
+#queue {
+    background-color: #363020;
+    background-opacity: 0.25;
+}
+
 .label {
     font-name: "fonts/Bahnschrift.fnt";
     font-size: 20px;
@@ -50,8 +78,10 @@
     width: 320px;
 }
 
-#buttonQueue {
-    background-color: #544d3d;
+.mapButton {
+    border-size: 0;
+    width: 300; 
+    height: 225;
 }
 
 .badge {
@@ -59,6 +89,12 @@
     padding: 4px;
     font-size: 16px;
 }
+
+#buttonQueue {
+    background-color: #544d3d;
+}
+
+
 
 .scrollview {
     background-color: transparent;

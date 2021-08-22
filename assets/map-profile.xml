@@ -1,16 +1,19 @@
-<vbox styleName="default-background" width="100%" height="100%">
+<vbox styleName="mapProfile" width="100%" height="100%">
     <vbox id="background-preview" width="100%" height="100%">
         <vbox id="background" width="100%" height="100%" padding="64">
             <button text="<< BACK" id="backButton" />
             <spacer height="16" />
 
             <label styleName="header-big" text="Map Title" id="title" />
-            <hbox id="authors" width="50%" continuous="true">
-                <label text=" by " />
+            <hbox id="authors" width="62%" continuous="true">
+                <labeloutlined text=" by " />
             </hbox>
             <spacer height="16" />
+            
             <label text="Map Date" id="date" />
-            <spacer height="16" />
+            <hbox id="tags" width="62%" continuous="true">
+                <labeloutlined text=" tags: " />
+            </hbox>
             <hbox width="100%" height="100%">
                 <vbox width="62%" height="100%">
                     <scrollview width="100%" height="100%" contentWidth="100%" style="border:none;" >
@@ -20,7 +23,10 @@
                 <spacer width="38%" />
                 <vbox width="320px" height="100%">
                     <button id="buttonQueue" styleName="biggerButton" text="QUEUE DOWNLOAD" />
-                    <button id="buttonMark" styleName="bigButton" text="MARK AS COMPLETED & HIDE" />
+                    <button id="buttonMark" styleName="bigButton" text="MARK AS DONE & HIDE" tooltip="hidden mods won't be recommended to you\n note: you can unhide it later in the Settings menu"/>
+                    <button id="buttonBrowse" styleName="bigButton" text="BROWSE LOCAL FILES" tooltip="browse the local mod install files in Windows Explorer" />
+                    <button id="buttonRedownload" styleName="bigButton" text="RE-DOWNLOAD + RE-INSTALL" tooltip="if this mod is broken for some reason,\nthis might repair it" />
+                    <button id="buttonDelete" styleName="bigButton" text="DELETE FILES & DE-QUEUE" tooltip="delete both the download and the mod install\n(but not any dependencies) and removes it from queue" />
                     <button id="buttonQuad" styleName="bigButton" text="RATE & DISCUSS ON QUADDICTED" />
                 </vbox>
             </hbox>

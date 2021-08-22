@@ -1,9 +1,18 @@
 <vbox styleName="default-background" width="100%" height="100%">
     <style source="styles/quakey.css" />
+    <hbox id="menuBar">
+        <button id="menuButton" text="SETTINGS" />
+        <spacer width="16" />
+        <label id="menuBarStatus" text="Welcome to QUAKEY" />
+        <spacer width="100%" />
+        <button id="notifyButton" text="NOTIFICATIONS" />
+    </hbox>
     <scrollview width="100%" height="100%" contentWidth="100%">
-        <maplist id="queue" mapListName="QUEUE" />
-        <maplist id="newReleases" mapListName="NEW RELEASES" />
-        <maplist id="highlyRated" mapListName="HIGHLY RATED MODERN (2010+)" />
-        <maplist id="highlyRatedOld" mapListName="HIGHLY RATED CLASSICS (1996-2009) " />
+        <maplist id="queue" mapListName="QUEUE" mapListDescription="(X) items" />
+        <maplist id="newReleases" mapListName="NEW RELEASES" mapListDescription="updated (DATE)" />
+        <maplist id="highlyRated" mapListName="MODERN MUST-PLAYS" mapListDescription="highly-rated newer releases from 2010 - present" />
+        <maplist id="highlyRatedOld" mapListName="RETRO CLASSICS" mapListDescription="highly-rated older releases from 1996 - 2009" />
+        <maplist id="listHard" mapListName="NIGHTMARE MODE" mapListDescription="releases tagged 'hard'" />
+        <maplist id="listSewer" mapListName="STUPENDOUS SEWERS" mapListDescription="releases tagged 'sewer' or 'cistern'" />
     </scrollview>
 </vbox>

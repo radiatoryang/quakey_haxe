@@ -66,5 +66,6 @@ class Notify extends VBox {
             MapProfile.openMapProfile( Database.instance.db[e.data.notifyID] );
         }
         notifyList.dataSource.removeAt( e.itemIndex );
+        refresh();
     }
 }

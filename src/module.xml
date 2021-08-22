@@ -2,6 +2,7 @@
     <components>
         <class name="MapButton" alias="mapbutton" />
         <class name="MapList" alias="maplist" />
+        <class name="LabelOutlined" alias="labeloutlined" />
     </components>
     <themes>
     	<global>

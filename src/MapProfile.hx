@@ -1,5 +1,6 @@
 package ;
 
+import Database.MapState;
 import datetime.utils.DateTimeMonthUtils;
 import haxe.ui.core.Screen;
 import Database.MapEntry;
@@ -31,7 +32,7 @@ class MapProfile extends VBox {
         super();
         
         if ( textFilter == null)
-            textFilter = new Glow(0x000000, 0.4, 1);
+            textFilter = new Glow(0x000000, 0.69, 1);
 
         if ( blurFilter == null)
             blurFilter = new Blur(16.0);
@@ -54,8 +55,12 @@ class MapProfile extends VBox {
         }
 
         var date = findComponent("date", Label);
-        var month = Database.getMonthName( mapData.date.getMonth() );
-        date.text = mapData.date != null ? mapData.date.format(' %d $month %Y') : " ";
+        if (mapData.date != null) {
+            var month = Database.getMonthName( mapData.date.getMonth() );
+            date.text = mapData.date.format(' %d $month %Y');
+        } else {
+            date.text = "(undated)";
+        }
 
         // DISPLAY FILE SIZE
         if ( mapData.size != null && mapData.size > 0) {
@@ -66,7 +71,7 @@ class MapProfile extends VBox {
             for( dependency in mapData.techinfo.requirements ) {
                 dependencySize += Database.instance.db[dependency].size;
             }
-            date.text += " (+ dependencies: " + Std.string(mapData.size) + "mb)";
+            date.text += " (+ dependencies: " + Std.string(dependencySize) + "mb)";
         }
 
         // DISPLAY RATING
@@ -93,41 +98,65 @@ class MapProfile extends VBox {
         date.filter = textFilter;
         date.tooltip = Database.getRelativeTime(mapData.date);
 
+        var tagsContainer = findComponent("tags", HBox);
+        if ( mapData.tags != null && mapData.tags.length > 0) {
+            for(tag in mapData.tags) {
+                var newButton = new Button();
+                newButton.text = tag;
+                tagsContainer.addComponent(newButton);
+            }
+        } else {
+            tagsContainer.hide();
+        }
+
         var description = findComponent("description", Label);
         description.text = mapData.description;
         description.filter = textFilter;
 
         Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoadedPreview );
         Downloader.instance.getImageAsync(mapData.id + ".jpg", onImageLoaded );
+
+        Database.instance.subscribeToState(mapData.id, onRefresh);
+    }
+
+    public override function show() {
+        super.show();
+        forceRefresh();
+    }
+
+    function forceRefresh() {
+        onRefresh( Database.instance.getState(mapData.id) );
     }
 
      /** mainly for refreshing the buttons on the map profile page; nothing else really changes **/
-    public function refresh() {
-        switch( Database.instance.getMapStatus(mapData.id) ) {
+    public function onRefresh(mapState:MapState) {
+        // trace("MapProfile.onRefresh for " + mapData.id);
+        switch( mapState.status ) {
             case NotQueued: 
                 buttonQueue.text = "QUEUE DOWNLOAD";
                 buttonQueue.disabled = false;
+                toggleFileButtons(false);
             case Queued: 
                 buttonQueue.text = "QUEUED...";
                 buttonQueue.disabled = true;
+                toggleFileButtons(false);
             case Downloading: 
-                buttonQueue.text = "DOWNLOADING...";
+                buttonQueue.text = "DOWNLOADING " + Std.string(Math.round(mapState.downloadProgress*100)) + "%";
                 buttonQueue.disabled = true;
+                toggleFileButtons(false);
             case Downloaded: 
                 buttonQueue.text = "INSTALLING...";
                 buttonQueue.disabled = true;
+                toggleFileButtons(true);
             case Installed: 
                 buttonQueue.text =  "PLAY >";
                 buttonQueue.disabled = false;
+                toggleFileButtons(true);
         }
     }
 
-    public static function refreshAllVisible() {
-        for (mapProfile in cache) {
-            if ( mapProfile.visible ) {
-                mapProfile.refresh();
-            }
-        }
+    inline function toggleFileButtons(state:Bool) {
+        buttonDelete.hidden = buttonRedownload.hidden = buttonBrowse.hidden = !state;
     }
 
     public function onImageLoadedPreview(filepath:String) {
@@ -149,27 +178,42 @@ class MapProfile extends VBox {
     @:bind(backButton, MouseEvent.CLICK)
     private function onBackButton(e:MouseEvent) {
         hide();
-        refreshAllVisible();
+        Database.refreshAllStates();
     }
 
     @:bind(buttonQueue, MouseEvent.CLICK)
     private function onQueueButton(e:MouseEvent) {
-        switch( Database.instance.getMapStatus(mapData.id) ) {
+        switch( Database.instance.getState(mapData.id, false).status ) {
             case NotQueued: 
-                Notify.instance.addNotify(mapData.id, "queued " + mapData.title + " for download");
                 UserState.instance.queueMap( mapData.id );
-                MainView.instance.refreshQueue();
             case Installed: 
-                buttonQueue.text =  "PLAY >";
-                buttonQueue.disabled = false;
                 UserState.instance.moveMapToFrontOfQueue( mapData.id );
-                MainView.instance.refreshQueue();
                 Launcher.launch(mapData);
             default:
                 // do nothing
         }
 
-        refresh();
+        Database.instance.refreshState(mapData.id);
+    }
+
+    @:bind(buttonDelete, MouseEvent.CLICK)
+    private function onDeleteButton(e:MouseEvent) {
+        UserState.instance.dequeueMap( mapData.id );
+        Downloader.instance.tryDeleteAll( mapData.id );
+
+        forceRefresh();
+    }
+
+    @:bind(buttonRedownload, MouseEvent.CLICK)
+    private function onRedownloadButton(e:MouseEvent) {
+        Downloader.instance.tryDeleteAll( mapData.id );
+        Downloader.instance.queueMapDownload(mapData);
+        forceRefresh();
+    }
+
+    @:bind(buttonBrowse, MouseEvent.CLICK)
+    private function onBrowseButton(e:MouseEvent) {
+        Launcher.openInExplorer( Downloader.getModInstallFolder(mapData) );
     }
 
     @:bind(buttonMark, MouseEvent.CLICK)
@@ -186,9 +230,9 @@ class MapProfile extends VBox {
     public static function openMapProfile(mapData:MapEntry) {
         if ( MapProfile.cache.exists(mapData.id)==false ) {
             var mapProfile = new MapProfile();
-            mapProfile.percentWidth = 100;
-            mapProfile.percentHeight = 100;
-            mapProfile.includeInLayout = false;
+            // mapProfile.percentWidth = 100;
+            // mapProfile.percentHeight = 100;
+            // mapProfile.includeInLayout = false;
             mapProfile.mapData = mapData;
             Main.app.addComponent(mapProfile);
             MapProfile.cache.set(mapData.id, mapProfile);
@@ -201,7 +245,6 @@ class MapProfile extends VBox {
             Screen.instance.setComponentIndex(mapProfile, Screen.instance.rootComponents.length );
         }
         mapProfile.show();
-        mapProfile.refresh();
 
         // temp for testing
         // Notify.instance.addNotify(mapData.id, "opened " + mapData.title);

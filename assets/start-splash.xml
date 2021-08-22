@@ -1,0 +1,16 @@
+<vbox id="splash" width="100%" height="100%" padding="64">
+    <spacer height="32" />
+    <style source="styles/quakey.css" />
+    <label text="QUAKEY" styleName="header-big" horizontalAlign="center" />
+    <label text="connecting to Quaddicted.com..." styleName="header" horizontalAlign="center" />
+    <spacer height="16" />
+    <vbox id="offline" styleName="description" hidden="true" horizontalAlign="center">
+        <label id="error" text="ERROR: Couldn't connect to Quaddicted." />
+        <spacer height="16" />
+        <label text="Double-check your internet connection, or maybe Quaddicted was asleep?" />
+        <button id="buttonRetry" styleName="biggerButton" horizontalAlign="center" text="RETRY CONNECTION" />
+        <spacer height="16" />
+        <label text="... or in Offline Mode, you can still play anything you already downloaded." />
+        <button id="buttonOffline" styleName="biggerButton" horizontalAlign="center" text="GO OFFLINE" />
+    </vbox>
+</vbox>

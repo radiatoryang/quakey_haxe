@@ -1,5 +1,9 @@
 package ;
 
+import sys.FileSystem;
+import haxe.io.Path;
+import sys.Http;
+import hxd.Math;
 import datetime.DateTime;
 import sys.io.File;
 
@@ -10,15 +14,26 @@ using UnicodeString;
 class Database {
 
     var xmlData:Xml;
-    public static var instance:Database = new Database();
+    public static var instance:Database;
+
     public var db: Map<String, MapEntry> = new Map<String, MapEntry>();
+    var states:Map<String, MapState> = new Map<String, MapState>();
+    // var signals:Map<String, Signal1<MapState>> = new Map<String, Signal1<MapState>>();
+    var signals:Map<String, Array<MapState->Void>> = new Map<String, Array<MapState->Void>>();
+
+    public static function init() {
+        if ( !FileSystem.exists(Main.BASE_DIR + Path.addTrailingSlash(Main.CACHE_PATH) + "quaddicted_database.xml") ) {
+            throw "No XML database file was found, not even an old cached version? Expected to find the file at " 
+            + Main.BASE_DIR + Path.addTrailingSlash(Main.CACHE_PATH) + "quaddicted_database.xml";
+        }
+        instance = new Database();
+    }
 
     private function new() {
         instance = this;
 
         var htmlStripRegex = ~/<[^>]*>/g;
-
-        xmlData = Xml.parse( File.getContent( "quaddicted_database.xml" ) );
+        xmlData = Xml.parse( File.getContent( Main.BASE_DIR + Path.addTrailingSlash(Main.CACHE_PATH) + "quaddicted_database.xml" ) );
         var root = xmlData.firstElement();
         for (file in root.elementsNamed("file")) {
             var id = file.get("id");
@@ -28,6 +43,7 @@ class Database {
             var description = id;
             var date:Date = null;
             var size = -1.0;
+            var tags = new Array<String>();
             var rating = Std.parseFloat(file.get("normalized_users_rating"));
             
             for(titleString in file.elementsNamed("title")) {
@@ -42,9 +58,12 @@ class Database {
             }
 
             for(authorString in file.elementsNamed("author")) {
-                authors = authorString.firstChild().nodeValue.split(","); // TODO: split on "&" and "&amp;" too
-                for(i in 0...authors.length) {
-                    authors[i] = authors[i].trim();
+                var lotsOfAuthors = authorString.firstChild().nodeValue.replace("&amp;", "&").split(",");
+                for(stillMaybeMultipleAuthor in lotsOfAuthors) {
+                    var multipleAuthors = stillMaybeMultipleAuthor.split('&');
+                    for (authorName in multipleAuthors) {
+                        authors.push( authorName.trim() );
+                    }
                 }
             }
 
@@ -60,6 +79,12 @@ class Database {
 
             for (sizeString in file.elementsNamed("size")) {
                 size = Math.round( Std.parseInt(sizeString.firstChild().nodeValue.trim()) / 100.0 ) / 10.0;
+            }
+
+            for(tagElement in file.elementsNamed("tags")) {
+                for (tagString in tagElement.elementsNamed("tag")) {
+                    tags.push(tagString.firstChild().nodeValue.trim()); 
+                }   
             }
 
             var techInfo: TechInfo = { };
@@ -91,6 +116,7 @@ class Database {
                 date: date, 
                 size: size, 
                 rating: rating,
+                tags: tags,
                 techinfo: techInfo
             } );
         }
@@ -107,6 +133,7 @@ class Database {
         // trace("suffix test complete!");
     }
 
+    // TODO: will have to refactor for localization?
     public static function getMonthName(monthNumber:Int) {
         return switch( monthNumber ) {
             case January: return "January";
@@ -146,18 +173,68 @@ class Database {
         }
     }
 
-    public function getMapStatus(mapID:String) {
-        if ( Downloader.isModInstalled(mapID) ) {
-            return MapStatus.Installed;
-        } else if ( Downloader.isMapDownloaded(mapID) ) {
-            return MapStatus.Downloaded;
-        } else if ( mapID == Downloader.instance.currentMapDownloadID ) {
-            return MapStatus.Downloading;
-        } else if (UserState.instance.isMapQueued(mapID) ) {
-            return MapStatus.Queued;
-        } else {
-            return MapStatus.NotQueued;
+    // public function getMapStatus(mapID:String) {
+    //     if ( Downloader.isModInstalled(mapID) ) {
+    //         return MapStatus.Installed;
+    //     } else if ( Downloader.isMapDownloaded(mapID) ) {
+    //         return MapStatus.Downloaded;
+    //     } else if ( mapID == Downloader.instance.currentMapDownloadID ) {
+    //         return MapStatus.Downloading;
+    //     } else if (UserState.instance.isMapQueued(mapID) ) {
+    //         return MapStatus.Queued;
+    //     } else {
+    //         return MapStatus.NotQueued;
+    //     }
+    // }
+
+    public static function refreshAllStates() {
+        for( mapID => state in instance.states) {
+            instance.refreshState(mapID);
         }
+    }
+
+    public function getState(mapID:String, noRefresh=false) {
+        if ( !states.exists(mapID) ) {
+            states.set(mapID, {status: NotQueued, downloadProgress: 0.0});
+        } 
+        return noRefresh ? states[mapID] : refreshState(mapID);
+    }
+
+    public function refreshState(mapID:String) {
+        if ( !states.exists(mapID) ) {
+            states.set(mapID, {status: NotQueued, downloadProgress: 0.0});
+        }
+
+        if ( Downloader.isModInstalled(mapID) ) {
+            states[mapID].status = MapStatus.Installed;
+        } else if ( Downloader.isMapDownloaded(mapID) ) {
+            states[mapID].status = MapStatus.Downloaded;
+        } else if ( mapID == Downloader.instance.currentMapDownloadID ) {
+            states[mapID].status = MapStatus.Downloading;
+            states[mapID].downloadProgress = Math.clamp(Downloader.instance.getCurrentMapDownloadProgress(), 0, 1.0);
+        } else if (UserState.instance.isMapQueued(mapID) ) {
+            states[mapID].status = MapStatus.Queued;
+        } else {
+            states[mapID].status = MapStatus.NotQueued;
+        }
+
+        if ( signals.exists(mapID) ) {
+            // signals[mapID].dispatch(states[mapID]);
+            for( callback in signals[mapID] ) {
+                if ( callback != null)
+                    callback(states[mapID]);
+            }
+        }
+
+        return states[mapID];
+    }
+
+    public function subscribeToState(mapID:String, callback:MapState->Void) {
+        if ( !signals.exists(mapID) ) {
+            signals.set(mapID, new Array<MapState->Void>());
+        }
+        signals[mapID].push( callback );
+        refreshState(mapID);
     }
 }
 
@@ -166,15 +243,17 @@ typedef MapEntry = {
     var title:String;
     
     var ?md5sum:String;
+
+    /** in megabytes, to the nearest tenth **/
     var ?size:Float;
     var ?date:DateTime;
     var ?description:String;
     var ?rating:Float;
     var ?authors:Array<String>;
-
+    var ?tags:Array<String>;
     var ?techinfo:TechInfo;
 
-    // extra info, diverges away from XML file format
+    /** extra info generated by Quakey, diverges away from Quaddicted XML file format **/ 
     var ?links:Array<String>;
 }
 
@@ -183,6 +262,11 @@ typedef TechInfo = {
     var ?commandline:String;
     var ?startmap:Array<String>;
     var ?requirements:Array<String>;
+}
+
+typedef MapState = {
+    var status:MapStatus;
+    var downloadProgress:Float;
 }
 
 enum MapStatus {
