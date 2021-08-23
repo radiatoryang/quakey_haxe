@@ -1,0 +1,6 @@
+<vbox width="400">
+    <grid width="100%">
+        <label text="New Config Name:" verticalAlign="center" />
+        <textfield width="100%" />
+    </grid>
+</vbox>

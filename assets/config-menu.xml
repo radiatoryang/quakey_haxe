@@ -1,0 +1,58 @@
+<vbox width="100%" height="100%">
+    <style source="styles/quakey.css" />
+    <scrollview id="config" width="100%" height="100%" contentWidth="100%">
+        <label text="QUAKE CONFIGURATION" styleName="header-big" />
+        <label width="100%" text="Quakey needs to know where your Quake files are. 
+        Make sure Quake is already installed; if not, install it and then restart Quakey.
+        Usually, you can click AUTO CONFIG and Quakey will figure it out. Usually." />
+        <spacer height="16" />
+
+        <hbox width="100%">
+            <button id="buttonAutoConfig" text="+ AUTO CONFIG (recommended)" />
+            <spacer width="16" />
+            <button id="buttonNewConfig" text="+ NEW CONFIG" />
+        </hbox>
+        <spacer height="16" />
+
+        <hbox width="100%">
+            <label text="CURRENT CONFIG: " />
+            <dropdown id="configDropdown" text="(no config selected)" width="320">
+            </dropdown>
+            <button id="buttonDeleteConfig" text="DELETE CONFIG" />
+        </hbox>
+
+        <vbox id="configForm" width="100%" styleName="description" horizontalAlign="center">
+            <hbox width="100%" continuous="true" tooltip="the path to a Quake engine .exe\n - we recommend Quakespasm-Spiked or vkQuake\n - limited support for QuakeEX (2021 re-release)">
+                <label styleName="formLabel" text="QUAKE ENGINE" />
+                <textfield id="fieldEngine" placeholder="" />
+                <button id="buttonEngineBrowse" text="Browse..." />
+                <button id="buttonEngineSelect" text="Select Engine..." />
+            </hbox>
+
+            <hbox width="100%" continuous="true" tooltip="where should Quakey install mods?\n - traditionally this is your Quake engine folder\n - but Quakey can load-in mods from anywhere">
+                <label styleName="formLabel" text="MOD FOLDER" />
+                <textfield id="fieldMods" placeholder="" />
+                <button id="buttonModsBrowse" text="Browse..." />
+            </hbox>
+
+            <hbox width="100%" continuous="true" tooltip="pak0.pak contains most of the core game data\n and it's usually found in /Quake/id1/">
+                <label styleName="formLabel" text="ID1/PAK0.PAK" />
+                <textfield id="fieldPak0" placeholder="" />
+                <button id="buttonPak0Browse" text="Browse..." />
+            </hbox>
+
+            <hbox width="100%" continuous="true" tooltip="pak1.pak contains some more core game data\n and it's usually found in /Quake/id1/">
+                <label styleName="formLabel" text="ID1/PAK1.PAK" />
+                <textfield id="fieldPak1" placeholder="" />
+                <button id="buttonPak1Browse" text="Browse..." />
+            </hbox>
+        </vbox>
+        <spacer height="16" />
+
+        <hbox width="100%">
+            <button id="buttonConfigFinish" styleName="biggerButton" text="SAVE + USE CONFIG" />
+            <!-- <spacer width="16" />
+            <button id="buttonCancel" text="CANCEL" /> -->
+        </hbox>
+    </scrollview>
+</vbox>

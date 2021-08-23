@@ -40,13 +40,18 @@ class Main {
     static var embedLoader:Loader;
     static var splashScreen:VBox;
     static var delayConnectionTest:Timer;
+    static var configScreen:VBox;
 
     public static inline var PROGRAM_NAME = "Quakey";
     public static var BASE_DIR = "base_dir"; // has a trailing slash
     public static inline var CACHE_PATH = "cache";
     public static inline var DOWNLOAD_PATH = "download";
-    public static var INSTALL_PATH = "mods";
+    public static inline var ENGINE_PATH = "engines"; // default engines path
+    public static inline var ENGINE_QUAKESPASM_PATH = "engines/quakespasm-spiked/quakespasm-spiked-win64.exe";
+    public static inline var INSTALL_PATH = "mods"; // default mod install path
+    public static var PROGRAM_DIR = "program_dir";
     public static inline var TEMPLATE_PATH = "template";
+
     static inline var databaseURL = "https://www.quaddicted.com/reviews/quaddicted_database.xml";
 
     public static inline var FORCE_PROGRAM_PATH = false;
@@ -55,12 +60,14 @@ class Main {
 
     public static function main() {
         // first, try to figure out where to put all the files
+        PROGRAM_DIR = Sys.programPath(); 
+        PROGRAM_DIR = PROGRAM_DIR.substring(0, PROGRAM_DIR.length-("Main.hl").length );
+
         var appData = Sys.getEnv("APPDATA"); // default to Windows AppData, like a good samaritan
-        if ( FORCE_PROGRAM_PATH || (appData != null && appData.length > 0) ) {
+        if ( !FORCE_PROGRAM_PATH && appData != null && appData.length > 0 && FileSystem.exists(Path.addTrailingSlash(appData)) ) {
             BASE_DIR = Path.addTrailingSlash( Path.normalize( Path.addTrailingSlash(appData) + PROGRAM_NAME) );
         } else {
-            BASE_DIR = Sys.programPath(); // otherwise, just dump everything in the local path
-            BASE_DIR = BASE_DIR.substring(0, BASE_DIR.length-("Main.hl").length );
+            BASE_DIR = PROGRAM_DIR; // if we can't use AppData, then just dump everything in the local path (portable mode?)
         }
 
         if (!FileSystem.exists(BASE_DIR) )
@@ -91,8 +98,13 @@ class Main {
             app.addComponent(splashScreen);
             app.start();
 
+            // test config screen
+            configScreen = new Config();
+            app.addComponent( configScreen );
+            splashScreen.hide();
+
             // try to download data from Quaddicted, which WILL BLOCK execution! but that's ok at startup
-            startConnectionTest();
+            // startConnectionTest();
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
             hxd.Window.getInstance().onClose = onExit;

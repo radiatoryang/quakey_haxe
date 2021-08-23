@@ -30,7 +30,7 @@
     background-opacity: 0.25;
 }
 
-.label {
+.label, .textfield {
     font-name: "fonts/Bahnschrift.fnt";
     font-size: 20px;
 }
@@ -57,13 +57,37 @@
     font-size: 12px;
 }
 
-.button {
+.button, .textfield {
     background-color: #363020;
     border-size: 2;
     border-top-color: #544d3d;
     border-left-color: #544d3d;
     border-right-color: #544d3d;
     border-bottom-color: #423b26;
+}
+
+.textfield {
+    background-color: #423b26;
+}
+
+#config {
+    background-color: black;
+    padding: 48;
+}
+
+#configForm .formLabel {
+    width: 160;
+    text-align: right;
+    padding-right: 8px;
+}
+
+#configForm .hbox {
+    margin-bottom: 32px;
+}
+
+#configForm .textfield {
+    width: 640;
+    color: #cccccc;
 }
 
 .bigButton {
