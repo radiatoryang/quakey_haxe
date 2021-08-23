@@ -41,21 +41,39 @@ class Main {
     static var splashScreen:VBox;
     static var delayConnectionTest:Timer;
 
+    public static inline var PROGRAM_NAME = "Quakey";
     public static var BASE_DIR = "base_dir"; // has a trailing slash
     public static inline var CACHE_PATH = "cache";
     public static inline var DOWNLOAD_PATH = "download";
-    // public static inline var INSTALLS_PATH = "installs";
+    public static var INSTALL_PATH = "mods";
     public static inline var TEMPLATE_PATH = "template";
+    static inline var databaseURL = "https://www.quaddicted.com/reviews/quaddicted_database.xml";
+
+    public static inline var FORCE_PROGRAM_PATH = false;
+    public static inline var USE_OLD_DATABASE = true;
+    public static inline var FORCE_OFFLINE = false;
 
     public static function main() {
-        BASE_DIR = Sys.programPath();
-        BASE_DIR = BASE_DIR.substring(0, BASE_DIR.length-("Main.hl").length );
+        // first, try to figure out where to put all the files
+        var appData = Sys.getEnv("APPDATA"); // default to Windows AppData, like a good samaritan
+        if ( FORCE_PROGRAM_PATH || (appData != null && appData.length > 0) ) {
+            BASE_DIR = Path.addTrailingSlash( Path.normalize( Path.addTrailingSlash(appData) + PROGRAM_NAME) );
+        } else {
+            BASE_DIR = Sys.programPath(); // otherwise, just dump everything in the local path
+            BASE_DIR = BASE_DIR.substring(0, BASE_DIR.length-("Main.hl").length );
+        }
+
+        if (!FileSystem.exists(BASE_DIR) )
+            FileSystem.createDirectory(BASE_DIR);
 
         if (!FileSystem.exists(BASE_DIR + CACHE_PATH))
             FileSystem.createDirectory(BASE_DIR + CACHE_PATH);
 
         if (!FileSystem.exists(BASE_DIR + DOWNLOAD_PATH))
             FileSystem.createDirectory(BASE_DIR + DOWNLOAD_PATH);
+
+        if (!FileSystem.exists(BASE_DIR + INSTALL_PATH))
+            FileSystem.createDirectory(BASE_DIR + INSTALL_PATH);
 
         Res.initEmbed();
         embedLoader = hxd.Res.loader;
@@ -81,12 +99,17 @@ class Main {
         });
     }
 
-    static inline var databaseURL = "https://www.quaddicted.com/reviews/quaddicted_database.xml";
-
     public static function startConnectionTest() {
         splashScreen.findComponent("offline", VBox).hide();
-        delayConnectionTest = new Timer(1000);
-        delayConnectionTest.run = connectionTest;
+
+        if ( USE_OLD_DATABASE || FORCE_OFFLINE ) {
+            if ( FORCE_OFFLINE )
+                online = false; 
+            continueStartup();
+        } else {
+            delayConnectionTest = new Timer(1000);
+            delayConnectionTest.run = connectionTest;
+        }
     }
 
     public static function connectionTest() {
@@ -123,6 +146,7 @@ class Main {
     }
 
     public static function continueStartup() {
+        trace("continuing startup...");
         Database.init();
 
         // temp until the user select screen goes up

@@ -36,7 +36,7 @@ class MainView extends VBox {
 
         // TODO: make this generic eventually, so users can add their own categories
         var highlyRated = findComponent("highlyRated", MapList);
-        var ratedModern = rated.filter( map -> map.rating >= 4.0 && map.date.getYear() >= 2010 );
+        var ratedModern = rated.filter( map -> map.rating >= 3.75 && map.date.getYear() >= 2010 );
         hxd.Rand.create().shuffle(ratedModern);
         for( i in 0... 8) {
             highlyRated.addMapButton( ratedModern[i] );
@@ -44,7 +44,7 @@ class MainView extends VBox {
         //mapLists.push(highlyRated);
 
         var highlyRatedOld = findComponent("highlyRatedOld", MapList);
-        var ratedClassic = rated.filter( map -> map.rating >= 4.0 && map.date.getYear() < 2010 );
+        var ratedClassic = rated.filter( map -> map.rating >= 3.75 && map.date.getYear() < 2010 );
         hxd.Rand.create().shuffle(ratedClassic);
         for( i in 0... 8) {
             highlyRatedOld.addMapButton( ratedClassic[i] );

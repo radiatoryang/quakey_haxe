@@ -36,7 +36,7 @@ class UserState {
         if ( !currentData.mapQueue.contains(mapID) ) {
             currentData.mapQueue.push(mapID);
             Downloader.instance.queueMapDownload( Database.instance.db[mapID] );
-            Notify.instance.addNotify(mapID, "QUEUED FOR DOWNLOAD AND INSTALL:\n" + Database.instance.db[mapID].title );
+            // Notify.instance.addNotify(mapID, "QUEUED FOR DOWNLOAD AND INSTALL:\n" + Database.instance.db[mapID].title );
             MainView.instance.refreshQueue();
         }
         saveUser();

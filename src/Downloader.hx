@@ -38,7 +38,7 @@ class Downloader {
 
     private function new() {
         downloadThreadPool = new ElasticThreadPool(1, 5.0);
-        threadPool = new ElasticThreadPool(1, 5.0); // need to keep this ThreadPool at 1 otherwise the CPU usage gets really intense
+        threadPool = new ElasticThreadPool(2, 5.0); // need to keep this ThreadPool at 2 or less otherwise the CPU usage gets really intense
         localLoader = new hxd.res.Loader( new hxd.fs.LocalFileSystem(Main.BASE_DIR, "") );
 
         refreshTimer = new Timer(1000);
@@ -85,15 +85,18 @@ class Downloader {
         }
         
         if ( !isMapDownloaded(mapData.id) ) {
-            Notify.instance.addNotify(mapData.id, "QUEUED FOR DOWNLOAD: " + mapData.title + " (required for " + mapData.title + ")" );
+            var notifyMessage = "QUEUED FOR DOWNLOAD: " + mapData.title;
+            if ( mapIDToTryToInstall != null) {
+                var mainPackage = Database.instance.db[mapIDToTryToInstall];
+                notifyMessage += " (required for " + mainPackage.title + ")";
+            }
+            Notify.instance.addNotify(mapData.id, notifyMessage);
             downloadThreadPool.run( () -> { downloadMapAsync(mapData.id, mapData.md5sum, mapIDToTryToInstall); } );
         } else {
-            // TODO: wait for a while, and then queue install again?
             trace( 'map ' + mapData.id + ' was already downloaded');
 
-            // DEBUG -- test our unzip and install features
-            // getRootModFolderInZipIfAny( getMapDownloadPath(mapID) );
-            // installModAsync( mapData );
+            if ( mapIDToTryToInstall == null) // if this isn't a dependency, then try to install it now
+                queueMapInstall( mapData, true );
         }
     }
 
@@ -107,8 +110,15 @@ class Downloader {
     }
 
     function downloadMapAsync(mapID:String, expectedMd5:String, ?mapIDToTryToInstall:String) {
-        if ( isMapDownloaded(mapID) )
+        if ( isMapDownloaded(mapID) ) {
+            Main.mainThread.events.run( () -> { onDownloadMapSuccess(mapID, mapIDToTryToInstall); } );
             return;
+        }
+
+        if ( UserState.instance.isMapQueued(mapID) == false && (mapIDToTryToInstall == null || UserState.instance.isMapQueued(mapIDToTryToInstall) == false)) {
+            trace( (mapIDToTryToInstall != null ? mapIDToTryToInstall : mapID) + " was removed from queue, so canceling download " + mapID);
+            return;
+        }
 
         trace('started downloading $mapID');
         var fullPath = getFullPath(Main.DOWNLOAD_PATH + "/" + mapID + ".zip");
@@ -135,9 +145,10 @@ class Downloader {
         currentMapDownload.request();
     }
 
-    public function onDownloadMapSuccess(mapID:String, ?mapIDToTryToInstall:String) {
+    public function onDownloadMapSuccess(mapID:String, ?mapIDToTryToInstall:String, suppressNotification:Bool=false) {
         currentMapDownloadID = "";
-        Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
+        if (!suppressNotification)
+            Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
         Database.instance.refreshState(mapID);
 
         queueMapInstall( Database.instance.db[mapIDToTryToInstall != null ? mapIDToTryToInstall : mapID], mapIDToTryToInstall == null );
@@ -163,15 +174,22 @@ class Downloader {
 
     public static function isModInstalled(mapID:String) {
         var mapData = Database.instance.db[mapID];
-        return FileSystem.exists( getModInstallFolder(mapData) );
+        var installPath = getModInstallFolder(mapData);
+        if ( FileSystem.exists(installPath) ) {
+            var files = Dir.of(installPath);
+            return !files.isEmpty(); // no files inside (unzip operation failed?)
+        } else {
+            return false; // no folder found
+        }
     }
 
     /** returns the FULL PATH to the mod install folder **/
-    public static function getModInstallFolder(mapData:MapEntry, ?quakeExePath:String) {
-        if ( quakeExePath == null)
-            quakeExePath = UserState.instance.currentData.quakeExePath;
+    public static function getModInstallFolder(mapData:MapEntry, ?installPathOverride:String) {
+        if ( installPathOverride == null)
+            installPathOverride = Main.BASE_DIR + Path.addTrailingSlash(Main.INSTALL_PATH);
+        //    installPathOverride = UserState.instance.currentData.quakeExePath;
 
-        return Path.addTrailingSlash( Path.directory(quakeExePath) ) + Path.addTrailingSlash(getModInstallFolderName(mapData)); 
+        return Path.addTrailingSlash( Path.directory(installPathOverride) ) + Path.addTrailingSlash(getModInstallFolderName(mapData)); 
         // return UserState.instance.currentData.quakePath + "/quakey_" + getDesiredModFolder(mapData);
     }
 
@@ -272,7 +290,14 @@ class Downloader {
         return desiredModFolder;
     }
 
-    public function queueMapInstall(mapData:MapEntry, canQueueDownload:Bool=false) {
+    public function queueMapInstall(mapData:MapEntry, canQueueDownload:Bool=false, installEvenIfAlreadyInstalled:Bool=false) {
+        if ( !installEvenIfAlreadyInstalled ) {
+            if ( isModInstalled(mapData.id) ) {
+                trace(mapData.id + " was already installed!");
+                return;
+            }
+        }
+
         // before we do anything, let's make sure we downloaded all dependencies... if we haven't, we need to stop and queue this installation for later
 
         // TODO: also search command lines for possible dependencies?
@@ -286,7 +311,6 @@ class Downloader {
                 }
             }
         }
-
         downloadThreadPool.run( () -> { installModAsync( mapData ); } );
     }
 
@@ -462,12 +486,12 @@ class Downloader {
                 Notify.instance.addNotify(mapID, "couldn't delete " + getModInstallFolder( Database.instance.db[mapID]) + " (" + e.message + ")" );
             }
         } else {
-            trace("tried to delete install /" + mapID + "/ but it was already deleted?");
+            trace("tried to delete install /" + getModInstallFolderName(Database.instance.db[mapID]) + "/ but it was already deleted?");
         }
     }
 
     public function getImageAsync(filename:String, callback:String->Void) {
-        var localPath = Main.CACHE_PATH + "/" + filename;
+        var localPath = Path.addTrailingSlash(Main.CACHE_PATH) + filename;
         // if file is already cached, we don't need to do anything
         if ( TileCache.exists(localPath) ) {
             callback(localPath);
@@ -478,7 +502,7 @@ class Downloader {
     }
 
     function downloadImageAsync(filename:String, callback:String -> Void) {
-        var localPath = Main.CACHE_PATH + "/" + filename;
+        var localPath = Path.addTrailingSlash(Main.CACHE_PATH) + filename;
         var fullPath = getFullPath(localPath);
         if ( !FileSystem.exists(fullPath) ) {
             var url = "https://www.quaddicted.com/reviews/screenshots/" + filename;
@@ -486,6 +510,7 @@ class Downloader {
             http.onBytes = function(bytes) { 
                 File.saveBytes(fullPath, bytes); 
                 Main.mainThread.events.run( () -> { callback(localPath); } );
+                trace('saved $localPath to $fullPath');
             }
             http.onError = function(status) { 
                 // TODO: queue another request later on?
@@ -512,7 +537,7 @@ class Downloader {
 
         var data = localLoader.load(filepath);
 
-        // double check the file isn't an html
+        // double check the file isn't an html 
         var text = data.toText();
         if ( text.startsWith("<html>") ) {
             return null;

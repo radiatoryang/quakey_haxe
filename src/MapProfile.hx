@@ -69,9 +69,13 @@ class MapProfile extends VBox {
         if ( mapData.techinfo != null && mapData.techinfo.requirements != null && mapData.techinfo.requirements.length > 0 ) {
             var dependencySize = 0.0;
             for( dependency in mapData.techinfo.requirements ) {
-                dependencySize += Database.instance.db[dependency].size;
+                if ( Database.instance.db[dependency] != null && Database.instance.db[dependency].size != null ) {
+                    dependencySize += Database.instance.db[dependency].size;
+                } else {
+                    trace('dependency ID $dependency was invalid! someone tell Quaddicted');
+                }
             }
-            date.text += " (+ dependencies: " + Std.string(dependencySize) + "mb)";
+            date.text += " (+ " + Std.string(dependencySize) + "mb)";
         }
 
         // DISPLAY RATING
@@ -94,6 +98,8 @@ class MapProfile extends VBox {
             } else {
                 date.text += " (Not Recommended)";
             }
+        } else {
+            date.text += "(unrated)";
         }
         date.filter = textFilter;
         date.tooltip = Database.getRelativeTime(mapData.date);
