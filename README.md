@@ -4,12 +4,12 @@ Quakey is a modern browser / manager / launcher for Quake 1 single player maps a
 
 - simple browsing interface that hooks into Quake archive [Quaddicted](https://www.quaddicted.com/); does all mod downloading, installing, and launching for you
 - preconfigured to get you playing Quake in minutes
-- Windows only (for now)
+- Windows only (for now)... will never work on consoles, sorry.
 - doesn't support QuakeEX 2021 re-release (yet)
 
 ## Usage
 
-1. Buy Quake and install it.
+1. Buy Quake and install it. Get it on [Steam](https://store.steampowered.com/app/2310/QUAKE/), [GOG](https://www.gog.com/game/quake_the_offering), or [Bethesda](https://store.bethesda.net/store/bethesda/en_IE/pd/productID.5541691400), or whatever.
 2. Download Quakey, and unzip ALL THE FILES somewhere on your computer, e.g. C:\Quakey\
     - NEW TO QUAKE? Get the "full" version, which includes preconfigured modern Quake single player engine [Quakespasm-Spiked](https://triptohell.info/moodles/qss/).
     - KNOW QUAKE ALREADY? Get the "minimal" version, which is just the Quakey program files.
