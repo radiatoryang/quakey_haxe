@@ -22,7 +22,7 @@ Quakey is a modern browser / manager / launcher for Quake 1 single player maps a
 
 Quakey is basically a remake of Quake Injector but with more approachable curation and a visually-rich interface, geared toward an audience now familiar with online media app UX patterns like in Netflix. There's a simple queue system to track downloads, and then you click the play button. Additional options and features are easily accessible for power users too.
 
-The tech stack (Haxe + Heaps + HashLink + HaxeUI) was chosen for ease of use and futureproofing. Haxe resembles common OOP languages, and Heaps and HaxeUI are mature and still in active development as of 2021, while allowing easy multiplatform exports. A web frontend / Electron wrapper felt bloated and inappropriate, especially for an older Quake-using audience that has, um, strong opinions about system performance.
+The tech stack (Haxe + Heaps + HashLink + HaxeUI) was chosen for ease of use and futureproofing. Haxe resembles common OOP languages, and Heaps and HaxeUI are mature and still in active development as of 2021, while allowing easy multiplatform exports. A web frontend / Electron wrapper felt bloated and inappropriate, especially for an older Quake-using audience that has, um, strong opinions about system performance. If this stack ever collapses, it will be reasonably possible to port to Electron anyway.
 
 ## How to develop / build from source
 
