@@ -86,8 +86,18 @@
 }
 
 #configForm .textfield {
-    width: 640;
+    width: 750;
     color: #cccccc;
+}
+
+#configform .dropdown {
+    width: 750;
+    opacity: 0;
+    border-size: 0;
+}
+
+#configform .button {
+    height: 100%;
 }
 
 .bigButton {

@@ -1,5 +1,10 @@
 package ;
 
+import haxe.ui.containers.dialogs.Dialog;
+import haxe.ui.components.TextField;
+import haxe.ui.components.DropDown;
+import haxe.ui.containers.menus.MenuItem;
+import haxe.ui.events.ItemEvent;
 import haxe.ui.events.UIEvent;
 import haxe.ui.util.Color;
 import h3d.impl.VarBinding;
@@ -12,12 +17,20 @@ import sys.io.Process;
 
 using StringTools;
 
+@:build(haxe.ui.macros.ComponentMacros.build("assets/config-name-dialog.xml"))
+class ConfigNameDialog extends Dialog {
+    public function new() {
+        super();
+        title = "Rename Config";
+        buttons = DialogButton.CANCEL | DialogButton.SAVE;
+    }
+}
+
 @:build(haxe.ui.ComponentBuilder.build("assets/config-menu.xml"))
 class Config extends VBox {
 
     /** MUST be lowercase!!! **/
     static var quakeEnginePrefixes = ["quake", "vkquake", "glquake", "glqwcl", "qwcl", "winquake", "mark_v", "fte", "glpro", "dx8pro", "joequake", "darkplaces", "fitzquake", "qbism"];
-
     static var quakePathsFound:Array<String>;
     static var quakeEnginesFound:Array<String>;
     static var quakePak0sFound:Array<String>;
@@ -28,28 +41,69 @@ class Config extends VBox {
 
     public function new() {
         super();
-        scanForQuakeFiles();
+        buttonAutoConfig.hide();
         refreshValidate(null);
+    }
+
+    @:bind( buttonScan, MouseEvent.CLICK )
+    function startQuakeScan(e) {
+        scanForQuakeFiles();
+        var foundQuake = quakePathsFound != null && quakePathsFound.length > 0;
+        generateSelect( menuModsSelect, quakePathsFound, "Mod Folders" );
+        var foundEngine = quakeEnginesFound != null && quakeEnginesFound.length > 0;
+        generateSelect( menuEngineSelect, quakeEnginesFound, "Engines" );
+        var foundPak0 = quakePak0sFound != null && quakePak0sFound.length > 0;
+        generateSelect( menuPak0Select, quakePak0sFound, "Paks" );
+        var foundPak1 = quakePak1sFound != null && quakePak1sFound.length > 0;
+        generateSelect( menuPak1Select, quakePak1sFound, "Paks" );
+
+        buttonScan.text = "FOUND " + (menuEngineSelect.dataSource.size + menuPak0Select.dataSource.size + menuPak1Select.dataSource.size) + " QUAKE FILES";
+        if ( foundQuake && foundEngine && foundPak0 && foundPak1 ) {
+            buttonAutoConfig.show();
+        } else {
+            buttonScan.text += "... BUT NOT ENOUGH TO AUTO CONFIG, SORRY";
+            buttonAutoConfig.hide();
+        }
+    }
+
+    inline function generateSelect(dropdown:DropDown, options:Array<String>, placeholderText:String) {
+        if ( options != null && options.length > 0 ) {
+            dropdown.show();
+            dropdown.dataSource.clear();
+            for( option in options ) {
+                dropdown.dataSource.add( {text: option});
+            }
+            dropdown.text = ""; //placeholderText + " (" +options.length + ")";
+            // dropdown.tooltip = placeholderText + " that Quakey found when it searched";
+        } else {
+            dropdown.hide();
+        }
     }
 
     @:bind( buttonAutoConfig, MouseEvent.CLICK )
     function addAutoConfig(e:MouseEvent) {
-		makeNewConfig();        
+		makeNewConfig();
         currentConfig.name = "Auto Config";
-        currentConfig.quakeEnginePath = Main.PROGRAM_DIR + Main.ENGINE_QUAKESPASM_PATH;
+        if (quakeEnginesFound != null && quakeEnginesFound.length > 0)
+            currentConfig.quakeEnginePath = quakeEnginesFound[0];
         currentConfig.modFolderPath = Path.addTrailingSlash(Main.BASE_DIR + Main.INSTALL_PATH);
         if (quakePak0sFound != null && quakePak0sFound.length > 0)
             currentConfig.pak0path = quakePak0sFound[0];
         if (quakePak1sFound != null && quakePak1sFound.length > 0)
             currentConfig.pak1path = quakePak1sFound[0];
 
+        loadConfig(currentConfig);
         refreshConfigList();
-        // TODO: config dropdown select last
+        configDropdown.selectedIndex = configDropdown.dataSource.size-1;
     }
 
     function makeNewConfig() {
         currentConfig = { name: "New Config", quakeEnginePath: "", modFolderPath: "", pak0path: "", pak1path: "" };
         configs.push(currentConfig);
+
+        loadConfig(currentConfig);
+        refreshConfigList();
+        configDropdown.selectedIndex = configDropdown.dataSource.size-1;
     }
 
     function refreshConfigList() {
@@ -59,12 +113,58 @@ class Config extends VBox {
         }
     }
 
+    @:bind( menuEngineSelect, UIEvent.CHANGE )
+    @:bind( menuModsSelect, UIEvent.CHANGE )
+    @:bind( menuPak0Select, UIEvent.CHANGE )
+    @:bind( menuPak1Select, UIEvent.CHANGE )
+    function onSelectPathDropdown(e:UIEvent) {
+        var dropdown = cast(e.target, DropDown);
+        var textField = dropdown.findComponent(null, TextField);
+        textField.text = dropdown.text;
+        dropdown.text = "";
+    }
+
+    @:bind( buttonDeleteConfig, MouseEvent.CLICK)
+    function deleteConfig(e) {
+        if ( configs != null && configs.length > 0) {
+            configs.remove( configs[configDropdown.selectedIndex] );
+            configDropdown.dataSource.removeAt( configDropdown.selectedIndex );
+            if ( configs.length == 0) {
+                configDropdown.selectedIndex = -1;
+                configDropdown.text = "(no configs found)";
+                loadConfig(null);
+            } else {
+                configDropdown.selectedIndex = Math.round(Math.min(configDropdown.selectedIndex, configs.length-1));
+                loadConfig(configs[configDropdown.selectedIndex]);
+                configDropdown.text = currentConfig.name;
+            }
+        }
+    }
+
+    @:bind( buttonRenameConfig, MouseEvent.CLICK)
+    function renameConfig(e) {
+        var renameDialog = new ConfigNameDialog();
+        renameDialog.onDialogClosed = function(e:DialogEvent) {
+            if ( e.button == DialogButton.SAVE ) {
+                currentConfig.name = cast(e.target, ConfigNameDialog).rename.text;
+                configDropdown.text = currentConfig.name;
+                configDropdown.selectedItem.text = currentConfig.name;
+            }
+        };
+        renameDialog.rename.text = currentConfig.name;
+        renameDialog.showDialog();
+    }
+
+    @:bind( configDropdown, UIEvent.BEFORE_CHANGE )
+    function onConfigPreDropdown(e) {
+        if ( configDropdown.selectedIndex >= 0 && configDropdown.selectedIndex < configs.length && configs.length > 0)
+            saveConfig( configs[configDropdown.selectedIndex] );
+    }
+
     @:bind( configDropdown, UIEvent.CHANGE )
     function onConfigDropdown(e) {
         var index = configDropdown.selectedIndex;
-        if ( index >= 0) {
-            loadConfig( configs[index] );
-        }
+        loadConfig( index >= 0 ? configs[index] : null );
     }
 
     @:bind( buttonNewConfig, MouseEvent.CLICK )
@@ -74,12 +174,19 @@ class Config extends VBox {
     }
 
     function loadConfig(cfg:ConfigData) {
-        if ( cfg == null) return;
+        if ( cfg == null) {
+            fieldEngine.text = fieldMods.text = fieldPak0.text = fieldPak1.text = "";
+            currentConfig = null;
+            refreshValidate(null);
+            return;
+        }
 
         fieldEngine.text = cfg.quakeEnginePath;
         fieldMods.text = cfg.modFolderPath;
         fieldPak0.text = cfg.pak0path;
         fieldPak1.text = cfg.pak1path;
+
+        currentConfig = cfg;
         refreshValidate(null);
     }
 
@@ -98,11 +205,45 @@ class Config extends VBox {
     @:bind( fieldPak1, UIEvent.PROPERTY_CHANGE )
     function refreshValidate(e) {
         // needs an active config selected
+        if ( currentConfig == null) {
+            configForm.hide();
+            configBottom.hide();
+            buttonDeleteConfig.hide();
+            buttonRenameConfig.hide();
+            return;
+        }
+        configForm.show();
+        buttonDeleteConfig.show();
+        buttonRenameConfig.show();
 
         // now validate actual config settings
         var validConfig = true;
+        var needsRefresh = false;
 
         if ( fieldEngine.text != null && fieldEngine.text.toLowerCase().endsWith(".exe") && FileSystem.exists(fieldEngine.text) ) {
+            if ( currentConfig.quakeEnginePath != fieldEngine.text ) {
+                currentConfig.quakeEnginePath = fieldEngine.text;
+            }
+            // if the EXE path just became newly valid, then auto-fill remaining empty fields (assuming they're valid)
+            if ( fieldEngine.borderColor.r > 0.5 ) {
+                var quakePath = Path.addTrailingSlash(Path.normalize(Path.directory(fieldEngine.text)));
+                if ( isStringEmpty(currentConfig.modFolderPath) && isStringEmpty(fieldMods.text) ) {
+                    currentConfig.modFolderPath = quakePath;
+                    needsRefresh = true;
+                }
+                if ( isStringEmpty(currentConfig.pak0path) && isStringEmpty(fieldPak0.text) ) {
+                    if ( FileSystem.exists(quakePath + "id1/pak0.pak") ) {
+                        currentConfig.pak0path = quakePath + "id1/pak0.pak";
+                        needsRefresh = true;
+                    }
+                }
+                if ( isStringEmpty(currentConfig.pak1path) && isStringEmpty(fieldPak1.text) ) {
+                    if ( FileSystem.exists(quakePath + "id1/pak1.pak") ) {
+                        currentConfig.pak1path = quakePath + "id1/pak1.pak";
+                        needsRefresh = true;
+                    }
+                }
+            }
             fieldEngine.borderColor = "black";
         } else {
             fieldEngine.borderColor = "red";
@@ -110,6 +251,9 @@ class Config extends VBox {
         }
 
         if ( fieldMods.text != null && FileSystem.exists(fieldMods.text) && FileSystem.isDirectory(fieldMods.text) ) {
+            if ( currentConfig.modFolderPath != fieldMods.text ) {
+                currentConfig.modFolderPath = fieldMods.text;
+            }
             fieldMods.borderColor = "black";
         } else {
             fieldMods.borderColor = "red";
@@ -117,22 +261,83 @@ class Config extends VBox {
         }
 
         if ( fieldPak0.text != null && fieldPak0.text.toLowerCase().endsWith(".pak") && FileSystem.exists(fieldPak0.text) ) {
+            if ( currentConfig.pak0path != fieldPak0.text ) {
+                currentConfig.pak0path = fieldPak0.text;
+            }
+            if ( fieldMods.borderColor.r < 0.5) { // both pak path + mod path is valid
+                if (!cleanPath(currentConfig.pak0path).startsWith(cleanPath(currentConfig.modFolderPath)) ) { // but PAK isn't in there
+                    warningPak0.show();
+                    validConfig = false;
+                } else {
+                    warningPak0.hide();
+                }
+            }
             fieldPak0.borderColor = "black";
         } else {
             fieldPak0.borderColor = "red";
             validConfig = false;
+            warningPak0.hide();
         }
 
         if ( fieldPak1.text != null && fieldPak1.text.toLowerCase().endsWith(".pak") && FileSystem.exists(fieldPak1.text) ) {
+            if ( currentConfig.pak1path != fieldPak1.text ) {
+                currentConfig.pak1path = fieldPak1.text;
+            }
+            if ( fieldMods.borderColor.r < 0.5) { // both pak path + mod path is valid
+                if (!cleanPath(currentConfig.pak1path).startsWith(cleanPath(currentConfig.modFolderPath)) ) { // but PAK isn't in there
+                    warningPak1.show();
+                    validConfig = false;
+                } else {
+                    warningPak1.hide();
+                }
+            }
             fieldPak1.borderColor = "black";
         } else {
             fieldPak1.borderColor = "red";
             validConfig = false;
+            warningPak1.hide();
         }
 
-        // TODO: if paks aren't in the mod folder, then ask to copy them over
+        if ( needsRefresh ) {
+            currentConfig.quakeEnginePath = fieldEngine.text;
+            loadConfig(currentConfig);
+        }
 
-        buttonConfigFinish.hidden = !(currentConfig != null && validConfig);
+        configBottom.hidden = !(currentConfig != null && validConfig);
+    }
+
+    @:bind( buttonConfigTest, MouseEvent.CLICK )
+    function launchTest(e) {
+        var testLaunch = Launcher.launch(null, null, currentConfig.modFolderPath, currentConfig.quakeEnginePath, true);
+        if ( !testLaunch ) {
+            trace("test launch failed! something is wrong");
+        }
+    }
+
+    @:bind( warningPak0Button, MouseEvent.CLICK )
+    function copyPak0(e) {
+        var path = cleanPath(currentConfig.modFolderPath) + "id1/";
+        if ( !FileSystem.exists(path) ) {
+            FileSystem.createDirectory(path);
+        }
+        var pak = hx.files.File.of(currentConfig.pak0path);
+        fieldPak0.text = FileSystem.exists(path+"pak0.pak") ? path+"pak0.pak" : pak.copyTo(path+"pak0.pak").path.toString();
+        refreshValidate(null);
+    }
+
+    @:bind( warningPak1Button, MouseEvent.CLICK )
+    function copyPak1(e) {
+        var path = cleanPath(currentConfig.modFolderPath) + "id1/";
+        if ( !FileSystem.exists(path) ) {
+            FileSystem.createDirectory(path);
+        }
+        var pak = hx.files.File.of(currentConfig.pak1path);
+        fieldPak1.text = FileSystem.exists(path+"pak1.pak") ? path+"pak1.pak" : pak.copyTo(path+"pak1.pak").path.toString();
+        refreshValidate(null);
+    }
+
+    static inline function isStringEmpty(testString:String) {
+        return testString == null || testString.trim().length == 0;
     }
 
     @:bind( buttonEngineBrowse, MouseEvent.CLICK )
@@ -195,10 +400,10 @@ class Config extends VBox {
     public static function scanForQuakeFiles() {
         trace("beginning Quake scan...");
         var possibleQuakePaths = new Array<String>();
+        possibleQuakePaths.push( Main.PROGRAM_DIR + Main.ENGINE_QUAKESPASM_PATH );
+        possibleQuakePaths.push( Path.addTrailingSlash(Main.BASE_DIR + Main.INSTALL_PATH) );
         quakePathsFound = new Array<String>();
-        quakePathsFound.push( Path.addTrailingSlash(Main.BASE_DIR + Main.INSTALL_PATH) );
         quakeEnginesFound = new Array<String>();
-        quakeEnginesFound.push( Main.PROGRAM_DIR + Main.ENGINE_QUAKESPASM_PATH );
         quakePak0sFound = new Array<String>();
         quakePak1sFound = new Array<String>();
 
@@ -220,11 +425,22 @@ class Config extends VBox {
         // search all the paths we've accumulated
         for( path in possibleQuakePaths ) {
             if ( FileSystem.exists(path) ) {
+                quakePathsFound.push( path );
+                trace("found Quake path " + path);
+                var listOfExes = FileSystem.readDirectory(path).filter( filepath -> filepath.toLowerCase().endsWith(".exe"));
+                for(exeName in listOfExes) {
+                    for( enginePrefix in quakeEnginePrefixes ) {
+                        if ( exeName.toLowerCase().startsWith(enginePrefix) ) {
+                            quakeEnginesFound.push( Path.normalize( Path.addTrailingSlash(path) + exeName) );
+                            trace("found Quake engine " + exeName);
+                            break;
+                        }
+                    }
+                }
+
                 var possiblePakLocations = ["/id1/pak0.pak", "/id1/pak1.pak" ];
-                var foundAPakHere = false;
                 for( pakPath in possiblePakLocations) {
                     if (FileSystem.exists(path + pakPath) ) {
-                        foundAPakHere = true;
                         if ( pakPath.contains("pak0") ) {
                             quakePak0sFound.push( Path.normalize(path + pakPath) );
                         } else {
@@ -233,20 +449,6 @@ class Config extends VBox {
                         trace("found " + Path.normalize(path + pakPath) );
                     }
                 }
-                if ( foundAPakHere ) {
-                    quakePathsFound.push( path );
-                    trace("found Quake path " + path);
-                    var listOfExes = FileSystem.readDirectory(path).filter( filepath -> filepath.toLowerCase().endsWith(".exe"));
-                    for(exeName in listOfExes) {
-                        for( enginePrefix in quakeEnginePrefixes ) {
-                            if ( exeName.startsWith(enginePrefix) ) {
-                                quakeEnginesFound.push( Path.normalize( Path.addTrailingSlash(path) + exeName) );
-                                trace("found Quake engine " + exeName);
-                                break;
-                            }
-                        }
-                    }
-                } // end "found a pak here"
 
             } // end "quake path exists"
         } // end "possible quake paths"
@@ -276,8 +478,10 @@ class Config extends VBox {
         path = cleanPath( Path.addTrailingSlash( path ) + (suffix != null ? suffix : "") );
 		p.close();
         trace('regQuery($regDir, $key) = $path');
-        if ( !pathArray.contains(path) )
+        if ( !pathArray.contains(path) ) {
 		    pathArray.push(path);
+            pathArray.push(Path.addTrailingSlash(path) + Path.addTrailingSlash("rerelease")); // look for new 2021 rerelease too
+        }
 	}
 
     static inline function cleanPath(path:String) {

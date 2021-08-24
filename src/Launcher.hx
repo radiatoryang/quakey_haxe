@@ -12,12 +12,12 @@ class Launcher {
 
     public static var currentProcess:Process;
 
-    public static function launch(mapData:MapEntry, ?startmap:String, ?quakeExePath:String) {
+    public static function launch(?mapData:MapEntry, ?startmap:String, ?baseDir:String, ?quakeExePath:String, suppressNotify:Bool=false) {
         try {
             if ( quakeExePath == null) {
                 quakeExePath = UserState.instance.currentData.quakeExePath;
             }
-            if ( startmap == null ) {
+            if ( startmap == null && mapData != null ) {
                 if ( mapData.techinfo != null && mapData.techinfo.startmap != null && mapData.techinfo.startmap.length > 0 ) {
                     startmap = mapData.techinfo.startmap[0];
                 } else {
@@ -33,28 +33,63 @@ class Launcher {
                     }
                 }
             }
+
+            // TODO: code custom stuff for Quake rerelease?
+
             var quakeFolderPath = Path.addTrailingSlash( Path.directory( quakeExePath ) );
+            if ( baseDir == null ) {
+                baseDir = quakeFolderPath;
+            }
 
             var args = new Array<String>(); 
             
             // get command line arguments from database, but strip any "-game" commands out
-            if (mapData.techinfo != null && mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-game")) {
+            if (mapData != null && mapData.techinfo != null && mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-game")) {
                 args.push( stripGameCommandFromArguments(mapData.techinfo.commandline) );
             }
 
-            args.push("-basedir " + quakeFolderPath); // but older Quake engines don't support this?
-            args.push("-game " + Downloader.getModInstallFolderName(mapData) );
+            var isQuakeEX = quakeExePath.contains("Quake_x64");
+            if ( !isQuakeEX ) {
+                args.push('-basedir "' + baseDir + '"'); 
+            } else {
+                args.push('+kf_basepath "' + baseDir + '"');
+                args.push('+g_showintromovie 0');
+            }
+
+            if (mapData != null) {
+                args.push("-game " + Downloader.getModInstallFolderName(mapData) );
+            }
             
             if ( startmap != null) {
                 args.push("+map " + startmap);
             }
 
-            Notify.instance.addNotify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
-            currentProcess = new Process(quakeExePath + " " + args.join(" "));
+            if ( Notify.instance != null && !suppressNotify) {
+                Notify.instance.addNotify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
+            } else {
+                trace("LAUNCHING: " + quakeExePath + " " + args.join(" "));
+            }
+
+            // if ( !isQuakeEX ) {
+                currentProcess = new Process('"' + quakeExePath + '" ' + args.join(" "));
+                if ( currentProcess != null ) {
+                    trace(currentProcess.exitCode());
+                    trace( currentProcess.stdout.readAll().toString() );
+                    trace( currentProcess.stderr.readAll().toString() );
+                }
+            // } else {
+            //     currentProcess = new Process(quakeExePath, args);
+            // }
         } catch (e) {
-            Notify.instance.addNotify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
-            throw e;
+            if ( Notify.instance != null && !suppressNotify && mapData != null) {
+                Notify.instance.addNotify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
+            } else {
+                trace("ERROR, can't launch... " + e.message);
+            }
+            // throw e;
+            return false;
         }
+        return true;
     }
 
     public static function openInExplorer(filepath:String) {

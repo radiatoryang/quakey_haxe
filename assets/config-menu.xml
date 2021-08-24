@@ -2,15 +2,17 @@
     <style source="styles/quakey.css" />
     <scrollview id="config" width="100%" height="100%" contentWidth="100%">
         <label text="QUAKE CONFIGURATION" styleName="header-big" />
-        <label width="100%" text="Quakey needs to know where your Quake files are. 
-        Make sure Quake is already installed; if not, install it and then restart Quakey.
-        Usually, you can click AUTO CONFIG and Quakey will figure it out. Usually." />
+        <label width="100%" text="Quakey needs to know where to find Quake files and where to install mods. 
+        **MAKE SURE QUAKE IS ALREADY INSTALLED!** If it isn't, then go install it and restart Quakey.
+        Usually, you can click SCAN FOR QUAKE FILES and then AUTO CONFIG." />
         <spacer height="16" />
 
         <hbox width="100%">
-            <button id="buttonAutoConfig" text="+ AUTO CONFIG (recommended)" />
+            <button id="buttonScan" text="SCAN FOR QUAKE FILES (recommended)" tooltip="Quakey will try to guess where Steam, GOG, or Bethesda installed Quake.\n - this will work for 99% of people\n - but if you installed Quake in an unusual place, it won't find it" />
             <spacer width="16" />
-            <button id="buttonNewConfig" text="+ NEW CONFIG" />
+            <button id="buttonAutoConfig" text="+ AUTO CONFIG (recommended)" tooltip="If Quakey has found Quake files on your computer\nthen it can automatically configure itself." />
+            <spacer width="16" />
+            <button id="buttonNewConfig" text="+ MANUAL CONFIG" tooltip="creates a new blank configuration\nfor those who know what they're doing"/>
         </hbox>
         <spacer height="16" />
 
@@ -18,41 +20,61 @@
             <label text="CURRENT CONFIG: " />
             <dropdown id="configDropdown" text="(no config selected)" width="320">
             </dropdown>
-            <button id="buttonDeleteConfig" text="DELETE CONFIG" />
+            <button id="buttonDeleteConfig" text="DELETE" />
+            <button id="buttonRenameConfig" text="RENAME" />
         </hbox>
 
-        <vbox id="configForm" width="100%" styleName="description" horizontalAlign="center">
+        <vbox id="configForm" width="100%" styleName="description">
             <hbox width="100%" continuous="true" tooltip="the path to a Quake engine .exe\n - we recommend Quakespasm-Spiked or vkQuake\n - limited support for QuakeEX (2021 re-release)">
                 <label styleName="formLabel" text="QUAKE ENGINE" />
+                <dropdown id="menuEngineSelect" text="">
                 <textfield id="fieldEngine" placeholder="" />
-                <button id="buttonEngineBrowse" text="Browse..." />
-                <button id="buttonEngineSelect" text="Select Engine..." />
+                </dropdown>
+                <button id="buttonEngineBrowse" styleName="configBrowseButton" text="Browse..." />
             </hbox>
 
-            <hbox width="100%" continuous="true" tooltip="where should Quakey install mods?\n - traditionally this is your Quake engine folder\n - but Quakey can load-in mods from anywhere">
+            <hbox width="100%" continuous="true" tooltip="where should Quakey install mods?\n - traditionally, in your Quake engine folder\n - but it's safer to install mods elsewhere">
                 <label styleName="formLabel" text="MOD FOLDER" />
+                <dropdown id="menuModsSelect" text="">
                 <textfield id="fieldMods" placeholder="" />
-                <button id="buttonModsBrowse" text="Browse..." />
+                </dropdown>
+                <button id="buttonModsBrowse" styleName="configBrowseButton" text="Browse..." />
             </hbox>
 
             <hbox width="100%" continuous="true" tooltip="pak0.pak contains most of the core game data\n and it's usually found in /Quake/id1/">
                 <label styleName="formLabel" text="ID1/PAK0.PAK" />
+                <dropdown id="menuPak0Select" text="">
                 <textfield id="fieldPak0" placeholder="" />
-                <button id="buttonPak0Browse" text="Browse..." />
+                </dropdown>
+                <button id="buttonPak0Browse" styleName="configBrowseButton" text="Browse..." />
+            </hbox>
+            <hbox id="warningPak0" width="100%">
+                <label styleName="formLabel" text="" /> <!--spacer-->
+                <label id="warningPak0Text" style="color: red;" text="ERROR: pak0.pak must be at /(MOD FOLDER)/id1/pak0.pak" />
+                <spacer width="16" />
+                <button id="warningPak0Button" text="Fix" tooltip="makes a copy of pak0.pak and put it in the right place\n(if there's already a pak0.pak there, it won't overwrite it)" />
             </hbox>
 
             <hbox width="100%" continuous="true" tooltip="pak1.pak contains some more core game data\n and it's usually found in /Quake/id1/">
                 <label styleName="formLabel" text="ID1/PAK1.PAK" />
+                <dropdown id="menuPak1Select" text="">
                 <textfield id="fieldPak1" placeholder="" />
-                <button id="buttonPak1Browse" text="Browse..." />
+                </dropdown>
+                <button id="buttonPak1Browse" styleName="configBrowseButton" text="Browse..." />
+            </hbox>
+            <hbox id="warningPak1" width="100%">
+                <label styleName="formLabel" text="" /> <!--spacer-->
+                <label id="warningPak1Text" style="color: red;" text="ERROR: pak1.pak must be at /(MOD FOLDER)/id1/pak1.pak" />
+                <spacer width="16" />
+                <button id="warningPak1Button" text="Fix" tooltip="makes a copy of pak1.pak and put it in the right place\n(if there's already a pak1.pak there, it won't overwrite it)" />
             </hbox>
         </vbox>
         <spacer height="16" />
 
-        <hbox width="100%">
+        <hbox width="100%" id="configBottom">
+            <button id="buttonConfigTest" styleName="biggerButton" text="TEST CONFIG" />
+            <spacer width="16" />
             <button id="buttonConfigFinish" styleName="biggerButton" text="SAVE + USE CONFIG" />
-            <!-- <spacer width="16" />
-            <button id="buttonCancel" text="CANCEL" /> -->
         </hbox>
     </scrollview>
 </vbox>

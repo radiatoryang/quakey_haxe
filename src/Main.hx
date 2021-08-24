@@ -47,7 +47,7 @@ class Main {
     public static inline var CACHE_PATH = "cache";
     public static inline var DOWNLOAD_PATH = "download";
     public static inline var ENGINE_PATH = "engines"; // default engines path
-    public static inline var ENGINE_QUAKESPASM_PATH = "engines/quakespasm-spiked/quakespasm-spiked-win64.exe";
+    public static inline var ENGINE_QUAKESPASM_PATH = "engines/quakespasm-spiked/";
     public static inline var INSTALL_PATH = "mods"; // default mod install path
     public static var PROGRAM_DIR = "program_dir";
     public static inline var TEMPLATE_PATH = "template";
