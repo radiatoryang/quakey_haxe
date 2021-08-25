@@ -1,5 +1,6 @@
 package ;
 
+import haxe.ui.core.Component;
 import haxe.Timer;
 import haxe.ui.components.Button;
 import haxe.ui.components.Label;
@@ -161,7 +162,7 @@ class Main {
         app.addComponent( configScreen );
 
         // if config is nonexistent or bad
-        if ( Config.instance.currentConfig == null || !Config.validateConfig(Config.instance.currentConfig) ) {
+        if ( Config.instance.lastGoodConfig == null || !Config.validateConfig(Config.instance.lastGoodConfig) ) {
             configScreen.show();
             return;
         } 
@@ -187,6 +188,14 @@ class Main {
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 
         splashScreen.hide();
+    }
+
+    public static function moveToFrontButBeneathNotifications(frontComponent:Component) {
+        if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Notify.instance ) {
+            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 1 );
+        } else {
+            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length );
+        }
     }
 
     public static function onExit() {

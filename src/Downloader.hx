@@ -1,5 +1,6 @@
 package;
 
+import haxe.Json;
 import haxe.Timer;
 import haxe.Http;
 import haxe.io.Path;
@@ -186,7 +187,8 @@ class Downloader {
     /** returns the FULL PATH to the mod install folder **/
     public static function getModInstallFolder(mapData:MapEntry, ?installPathOverride:String) {
         if ( installPathOverride == null)
-            installPathOverride = Main.BASE_DIR + Path.addTrailingSlash(Main.INSTALL_PATH);
+            installPathOverride = Path.addTrailingSlash(Config.instance.lastGoodConfig.modFolderPath);
+        //    installPathOverride = Main.BASE_DIR + Path.addTrailingSlash(Main.INSTALL_PATH);
         //    installPathOverride = UserState.instance.currentData.quakeExePath;
 
         return Path.addTrailingSlash( Path.directory(installPathOverride) ) + Path.addTrailingSlash(getModInstallFolderName(mapData)); 
@@ -351,6 +353,12 @@ class Downloader {
             // unzip actual mod now
             unzip( getFullPath( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + mapData.id + ".zip"), unzipRoot, mapData );
             trace("successfully unzipped " + mapData.id + " to " + unzipRoot );
+
+            // write mapdb.json for KexQuake (or any other engine after it)
+            var mapManifest = getMapManifest(mapData);
+            var mapManifestJson = Json.stringify(mapManifest, null, "    ");
+            File.saveContent( Path.addTrailingSlash(newInstallFolder) + "mapdb.json", mapManifestJson );
+
             Main.mainThread.events.run( () -> { onInstallMapSuccess(mapData.id); } );
         } catch (e) {
             Main.mainThread.events.run( () -> { onInstallMapError(mapData.id, e.message); } );
@@ -553,4 +561,126 @@ class Downloader {
         @:privateAccess ToolkitAssets.instance._imageCache.set(filepath, imageData);
         TileCache.set(filepath, image.toTile() );
     }
+
+    public static function getMapListFromDisk(mapData:MapEntry):Array<String> {
+        if ( Downloader.isModInstalled(mapData.id) == false) {
+            trace("error: can't get map list if the mod isn't installed yet!");
+            return null;
+        }
+
+        var mapsFolderPath = Path.addTrailingSlash( Downloader.getModInstallFolder(mapData) ) + Path.addTrailingSlash("maps");
+        if ( FileSystem.exists(mapsFolderPath) ) {
+            var dir = Dir.of(mapsFolderPath);
+            var mapFiles = dir.findFiles("*.bsp").map( file -> file.path.filenameStem );
+            return mapFiles;
+        } else {
+            return null;
+        }
+    }
+
+    public static inline function sortAlphabetically(a:String, b:String):Int {
+        a = a.toUpperCase();
+        b = b.toUpperCase();
+      
+        if (a < b) {
+          return -1;
+        }
+        else if (a > b) {
+          return 1;
+        } else {
+          return 0;
+        }
+    }
+
+    /** generate data for mapdb.json that KexQuake / QuakeEX needs **/
+    static function getMapManifest(mapData:MapEntry):MapManifest {
+        var newManifest = {
+            episodes: new Array<MapManifestEpisode>(),
+            maps: new Array<MapManifestMap>()
+        };
+        
+        newManifest.episodes.push( getMapManifestEpisode(mapData) );
+        if ( mapData.techinfo != null && mapData.techinfo.startmap != null && mapData.techinfo.startmap.length > 0 ) {
+            for( startmap in mapData.techinfo.startmap ) {
+                newManifest.maps.push( getMapManifestMap(mapData, startmap) );
+            }
+        } else {
+            // get a list of all BSPs in /maps/
+            var mapNames = getMapListFromDisk(mapData);
+            if ( mapNames != null) {
+                for( mapName in mapNames ) {
+                    newManifest.maps.push( getMapManifestMap(mapData, mapName) );
+                }
+            }
+        }
+
+        return newManifest;
+    }
+
+    static function getMapManifestEpisode(mapData:MapEntry):MapManifestEpisode {
+        return {
+            dir: getModInstallFolderName(mapData),
+            name: mapData.title,
+            needsSkillSelect: true
+        };
+    }
+
+    static function getMapManifestMap(mapData:MapEntry, mapFileName:String):MapManifestMap {
+        return {
+            title: mapFileName,
+            bsp: mapFileName,
+            episode: getModInstallFolderName(mapData),
+            game: getModInstallFolderName(mapData),
+            dm: false,
+            coop: false,
+            bots: false,
+            sp: true
+        };
+    }
+}
+
+/** used by KexQuake / QuakeEX re-release, output as mapdb.json in root of mod folder **/
+typedef MapManifest = {
+    var episodes:Array<MapManifestEpisode>;
+    var maps:Array<MapManifestMap>;
+}
+
+/** used by KexQuake / QuakeEX re-release **/
+typedef MapManifestEpisode = {
+    /** game folder name... I think? **/
+    var dir:String;
+
+    /** proper display string in game **/
+    var name:String;
+
+    /** display skill select in UI? default to always on, because why not **/
+    var needsSkillSelect:Bool;
+}
+
+/** used by KexQuake / QuakeEX re-release **/
+typedef MapManifestMap = {
+    /** proper display string in game**/
+    var title:String;
+
+    /** map file name, without .bsp at the end **/
+    var bsp:String;
+
+    /** same value as "game" and MapManifestEpisode dir **/
+    var episode:String;
+
+    /** same value as "episode" and MapManifestEpisode dir **/
+    var game:String;
+
+    /** does this map support deathmatch? (needs info_player_deathmatch spawns) **/
+    var dm:Bool;
+
+    /** does this map support coop? (needs info_player_coop spawns) **/
+    var coop:Bool;
+
+    /** does this map support bots? (needs .NAV files) **/
+    var bots:Bool;
+
+    /** does this map support singleplayer? (needs info_player_start) 
+    ... default to true, because that's what we're here for **/
+    var sp:Bool;
 }

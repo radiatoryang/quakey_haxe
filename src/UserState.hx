@@ -98,31 +98,10 @@ class UserState {
         var fileData = Json.stringify(userData, null, "\t");
         File.saveContent(Main.BASE_DIR + USER_DIR + username + ".json", fileData);
     }
-
-    public static function getQuakeEXEPath() {
-        if ( instance == null)
-            return null;
-
-        if ( instance.currentData == null)
-            return null;
-
-        return instance.currentData.quakeExePath;
-    }
-
-    public static function getQuakeFolderPath() {
-        if ( instance == null)
-            return null;
-
-        if ( instance.currentData == null)
-            return null;
-        
-        return Path.directory( getQuakeEXEPath() );
-    }
 }
 
 typedef UserData = {
     var username: String;
     var mapQueue: Array<String>;
     var mapComplete: Array<String>;
-    var ?quakeExePath: String;
 }

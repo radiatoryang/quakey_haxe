@@ -86,8 +86,8 @@ class MainView extends VBox {
         trace("queue is currently: " + UserState.instance.currentData.mapQueue.join(", "));
     }
     
-    // @:bind(button2, MouseEvent.CLICK)
-    // private function onMyButton(e:MouseEvent) {
-    //     button2.text = "Thanks!";
-    // }
+    @:bind(menuButton, MouseEvent.CLICK)
+    private function openMenu(e:MouseEvent) {
+        Config.instance.show();
+    }
 }

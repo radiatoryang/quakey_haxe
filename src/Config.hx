@@ -40,7 +40,8 @@ class Config extends VBox {
     static var quakePak1sFound:Array<String>;
 
     var currentData:ConfigJSON;
-    public var currentConfig(default, null):ConfigData;
+    public var lastGoodConfig(default, null):ConfigData;
+    var currentConfig:ConfigData;
     var configs(get, set):Array<ConfigData>;
     function get_configs() {
         return currentData.configs;
@@ -64,6 +65,7 @@ class Config extends VBox {
         super.show();
         loadFromFileIfExists();
         buttonAutoConfig.hide();
+        Main.moveToFrontButBeneathNotifications(this);
         refreshValidate(null);
     }
 
@@ -188,6 +190,8 @@ class Config extends VBox {
             currentConfig = currentData.configs[currentData.currentIndex];
             configDropdown.selectedIndex = currentData.currentIndex;
         }
+        if ( currentConfig != null)
+            lastGoodConfig = currentConfig;
         refreshConfigList();
     }
 
@@ -242,6 +246,25 @@ class Config extends VBox {
         if ( !isValidFile(config.pak1path, ".pak") || !isFileInPath(config.pak1path, config.modFolderPath) )
             return false;
 
+        if( isValidFile(config.quakeEnginePath, ".exe") && isQuakeEX(config.quakeEnginePath) )
+            return validateForQuakeEX(config);
+
+        return true;
+    }
+
+    public static function isQuakeEX(quakeExePath:String) {
+        return quakeExePath.toLowerCase().contains("quake_x64");
+    }
+
+    public static function validateForQuakeEX(config:ConfigData):Bool {
+        if ( !isValidFile(config.quakeEnginePath, ".exe") )
+            return false;
+
+        var quakeFolderPath = Path.directory(config.quakeEnginePath);
+        if ( !isValidFolder(config.modFolderPath) || !isFileInPath(config.modFolderPath, quakeFolderPath) ) {
+            return false;
+        }
+
         return true;
     }
 
@@ -289,7 +312,10 @@ class Config extends VBox {
                     }
                 }
                 if ( isStringEmpty(currentConfig.pak1path) && isStringEmpty(fieldPak1.text) ) {
-                    if ( FileSystem.exists(quakePath + "id1/pak1.pak") ) {
+                    if ( FileSystem.exists(quakePath + "id1/pak0.pak") && isQuakeEX(fieldEngine.text) ) { // KexQuake only has one pak
+                        currentConfig.pak1path = quakePath + "id1/pak0.pak";
+                        needsRefresh = true;
+                    } else if ( FileSystem.exists(quakePath + "id1/pak1.pak") ) {
                         currentConfig.pak1path = quakePath + "id1/pak1.pak";
                         needsRefresh = true;
                     }
@@ -304,6 +330,14 @@ class Config extends VBox {
         if ( isValidFolder(fieldMods.text) ) {
             if ( currentConfig.modFolderPath != fieldMods.text ) {
                 currentConfig.modFolderPath = fieldMods.text;
+            }
+            if (fieldEngine.borderColor.r < 0.5 && isQuakeEX(currentConfig.quakeEnginePath) ) { // QuakeEX *must* use the EXE folder
+                if ( !isFileInPath(currentConfig.modFolderPath, Path.directory(currentConfig.quakeEnginePath)) ) {
+                    warningKex.show();
+                    validConfig = false;
+                } else {
+                    warningKex.hide();
+                }
             }
             fieldMods.borderColor = "black";
         } else {
@@ -380,11 +414,23 @@ class Config extends VBox {
     @:bind( buttonConfigFinish, MouseEvent.CLICK )
     function finishConfig(e) {
         saveConfig(currentConfig);
-        trace("using config: " + currentConfig);
+        lastGoodConfig = currentConfig;
+        trace("using config: " + lastGoodConfig);
         if ( !Main.startupDone ) {
             Main.continueStartupForRealNoSeriously();
         }
         hide();
+    }
+
+    @:bind( warningKexButton, MouseEvent.CLICK )
+    function fixKex(e) {
+        var path = cleanPath(Path.directory(currentConfig.quakeEnginePath));
+        disableAutoRefresh = true;
+        fieldMods.text = path;
+        fieldPak0.text = path + "id1/pak0.pak";
+        fieldPak1.text = path + "id1/pak0.pak";
+        disableAutoRefresh = false;
+        refreshValidate(null);
     }
 
     @:bind( warningPak0Button, MouseEvent.CLICK )

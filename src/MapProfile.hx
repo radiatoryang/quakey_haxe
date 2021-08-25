@@ -244,12 +244,7 @@ class MapProfile extends VBox {
             MapProfile.cache.set(mapData.id, mapProfile);
         }
         var mapProfile = MapProfile.cache[mapData.id];
-        // push new map profile screen to the front, but don't push it in front of the Notifications layer
-        if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Notify.instance ) {
-            Screen.instance.setComponentIndex(mapProfile, Screen.instance.rootComponents.length - 1 );
-        } else {
-            Screen.instance.setComponentIndex(mapProfile, Screen.instance.rootComponents.length );
-        }
+        Main.moveToFrontButBeneathNotifications(mapProfile);
         mapProfile.show();
 
         // temp for testing

@@ -1,5 +1,7 @@
 package ;
 
+import sys.io.File;
+import hxd.System;
 import sys.FileSystem;
 import hx.files.Dir;
 import haxe.io.Path;
@@ -15,19 +17,33 @@ class Launcher {
     public static function launch(?mapData:MapEntry, ?startmap:String, ?baseDir:String, ?quakeExePath:String, suppressNotify:Bool=false) {
         try {
             if ( quakeExePath == null) {
-                quakeExePath = UserState.instance.currentData.quakeExePath;
+                quakeExePath = Config.instance.lastGoodConfig.quakeEnginePath;
             }
             if ( startmap == null && mapData != null ) {
                 if ( mapData.techinfo != null && mapData.techinfo.startmap != null && mapData.techinfo.startmap.length > 0 ) {
                     startmap = mapData.techinfo.startmap[0];
                 } else {
                     // get a list of all BSPs in /maps/ and select a startmap
-                    var mapNames = getMapListFromDisk(mapData);
+                    var mapNames = Downloader.getMapListFromDisk(mapData);
                     if ( mapNames != null) {
+                        // look for a map named start
                         if ( mapNames.contains("start") ) {
                             startmap = "start";
-                        } else {
-                            mapNames.sort( sortAlphabetically );
+                        }
+
+                        // look for anything with a "start" inside
+                        if ( startmap == null) {
+                            for( mapName in mapNames) {
+                                if ( mapName.toLowerCase().contains("start") ) {
+                                    startmap = mapName;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // still didn't find one? then just choose the alphabetical one
+                        if ( startmap == null) { 
+                            mapNames.sort( Downloader.sortAlphabetically );
                             startmap = mapNames[0];
                         }
                     }
@@ -38,7 +54,11 @@ class Launcher {
 
             var quakeFolderPath = Path.addTrailingSlash( Path.directory( quakeExePath ) );
             if ( baseDir == null ) {
-                baseDir = quakeFolderPath;
+                if (Config.instance.lastGoodConfig != null) {
+                    baseDir = Config.instance.lastGoodConfig.modFolderPath;
+                } else {
+                    baseDir = quakeFolderPath;
+                }
             }
 
             var args = new Array<String>(); 
@@ -48,16 +68,25 @@ class Launcher {
                 args.push( stripGameCommandFromArguments(mapData.techinfo.commandline) );
             }
 
-            var isQuakeEX = quakeExePath.contains("Quake_x64");
+            var isQuakeEX = Config.isQuakeEX(quakeExePath);
+            var appidPath = Path.addTrailingSlash(quakeFolderPath) + "steam_appid.txt";
             if ( !isQuakeEX ) {
                 args.push('-basedir "' + baseDir + '"'); 
             } else {
-                args.push('+kf_basepath "' + baseDir + '"');
-                args.push('+g_showintromovie 0');
+                if ( !FileSystem.exists(appidPath) ) { // you need a steam_appid.txt next to KexQuake or else you can't launch it from outside of Steam
+                    File.saveContent( appidPath, "2310" );
+                }
+                // args.push('+g_showintromovie 0');
+                // args.push('+kf_basepath "' + quakeFolderPath + '"');
+                // args.push('+kf_basepath C:/Users/Robert/AppData/Roaming/Quakey/mods/');
+                //args.push('+g_showintromovie 0');
             }
 
             if (mapData != null) {
-                args.push("-game " + Downloader.getModInstallFolderName(mapData) );
+                if ( !isQuakeEX ) 
+                    args.push( "-game " + Downloader.getModInstallFolderName(mapData) );
+                else
+                    args.push( "+game " + Downloader.getModInstallFolderName(mapData) );
             }
             
             if ( startmap != null) {
@@ -70,21 +99,29 @@ class Launcher {
                 trace("LAUNCHING: " + quakeExePath + " " + args.join(" "));
             }
 
-            // if ( !isQuakeEX ) {
+            // use Steam protocol fallback because it's looking for a steam_appid in the current working directory, which we need for Quakey stuff
+            // TODO: create a steam_appid.txt in current working directory?
+            if ( isQuakeEX && quakeExePath.toLowerCase().contains("steam") && !FileSystem.exists(appidPath) ) {
+                for (i in 0...args.length) {
+                    args[i] = args[i].replace("/", "\\");
+                }
+                var url = "steam://run/2310//" + args.join(" ") + "/";
+                trace(url);
+                System.openURL(url); 
+            } else {
+                Sys.setCwd(quakeFolderPath);
                 currentProcess = new Process('"' + quakeExePath + '" ' + args.join(" "));
                 // if ( currentProcess != null ) {
                 //     trace(currentProcess.exitCode(false));
                 //     trace( currentProcess.stdout.readAll().toString() );
                 //     trace( currentProcess.stderr.readAll().toString() );
                 // }
-            // } else {
-            //     currentProcess = new Process(quakeExePath, args);
-            // }
+            }
         } catch (e) {
             if ( Notify.instance != null && !suppressNotify && mapData != null) {
                 Notify.instance.addNotify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
             } else {
-                trace("ERROR, can't launch... " + e.message);
+                trace("ERROR, can't launch " + quakeExePath + "because: " + e.message);
             }
             // throw e;
             return false;
@@ -93,37 +130,7 @@ class Launcher {
     }
 
     public static function openInExplorer(filepath:String) {
-        Sys.command("start " + filepath);
-    }
-
-    static function getMapListFromDisk(mapData:MapEntry) {
-        if ( Downloader.isModInstalled(mapData.id) == false) {
-            trace("error: can't get map list if the mod isn't installed yet!");
-            return null;
-        }
-
-        var mapsFolderPath = Path.addTrailingSlash( Downloader.getModInstallFolder(mapData) ) + Path.addTrailingSlash("maps");
-        if ( FileSystem.exists(mapsFolderPath) ) {
-            var dir = Dir.of(mapsFolderPath);
-            var mapFiles = dir.findFiles("*.bsp").map( file -> file.path.filenameStem );
-            return mapFiles;
-        } else {
-            return null;
-        }
-    }
-
-    static inline function sortAlphabetically(a:String, b:String):Int {
-        a = a.toUpperCase();
-        b = b.toUpperCase();
-      
-        if (a < b) {
-          return -1;
-        }
-        else if (a > b) {
-          return 1;
-        } else {
-          return 0;
-        }
+        Sys.command('start "" "' + filepath + '"');
     }
 
     static inline function stripGameCommandFromArguments(cmdLine:String) {

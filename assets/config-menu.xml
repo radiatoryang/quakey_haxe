@@ -40,6 +40,12 @@
                 </dropdown>
                 <button id="buttonModsBrowse" styleName="configBrowseButton" text="Browse..." />
             </hbox>
+            <hbox id="warningKex" width="100%">
+                <label styleName="formLabel" text="" /> <!--spacer-->
+                <label style="color: red;" text="ERROR: for KexQuake / QuakeEX (2021 re-release), mods MUST be installed in the same folder." />
+                <spacer width="16" />
+                <button id="warningKexButton" text="Fix" tooltip="change all paths and paks to work for QuakeEX" />
+            </hbox>
 
             <hbox width="100%" continuous="true" tooltip="pak0.pak contains most of the core game data\n and it's usually found in /Quake/id1/">
                 <label styleName="formLabel" text="ID1/PAK0.PAK" />
