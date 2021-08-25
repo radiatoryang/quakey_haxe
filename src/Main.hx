@@ -36,6 +36,7 @@ class Main {
     public static var mainThread:Thread;
 
     public static var online:Bool = false;
+    public static var startupDone:Bool = false;
 
     static var embedLoader:Loader;
     static var splashScreen:VBox;
@@ -98,13 +99,8 @@ class Main {
             app.addComponent(splashScreen);
             app.start();
 
-            // test config screen
-            configScreen = new Config();
-            app.addComponent( configScreen );
-            splashScreen.hide();
-
             // try to download data from Quaddicted, which WILL BLOCK execution! but that's ok at startup
-            // startConnectionTest();
+            startConnectionTest();
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
             hxd.Window.getInstance().onClose = onExit;
@@ -159,6 +155,23 @@ class Main {
 
     public static function continueStartup() {
         trace("continuing startup...");
+
+        // initialize config
+        configScreen = Config.init();
+        app.addComponent( configScreen );
+
+        // if config is nonexistent or bad
+        if ( Config.instance.currentConfig == null || !Config.validateConfig(Config.instance.currentConfig) ) {
+            configScreen.show();
+            return;
+        } 
+        configScreen.hide();
+
+        continueStartupForRealNoSeriously();
+    }
+
+    public static function continueStartupForRealNoSeriously() {
+        startupDone = true;
         Database.init();
 
         // temp until the user select screen goes up

@@ -72,11 +72,11 @@ class Launcher {
 
             // if ( !isQuakeEX ) {
                 currentProcess = new Process('"' + quakeExePath + '" ' + args.join(" "));
-                if ( currentProcess != null ) {
-                    trace(currentProcess.exitCode());
-                    trace( currentProcess.stdout.readAll().toString() );
-                    trace( currentProcess.stderr.readAll().toString() );
-                }
+                // if ( currentProcess != null ) {
+                //     trace(currentProcess.exitCode(false));
+                //     trace( currentProcess.stdout.readAll().toString() );
+                //     trace( currentProcess.stderr.readAll().toString() );
+                // }
             // } else {
             //     currentProcess = new Process(quakeExePath, args);
             // }

@@ -95,7 +95,7 @@ class UserState {
         if (!FileSystem.exists(Main.BASE_DIR + USER_DIR))
             FileSystem.createDirectory(Main.BASE_DIR + USER_DIR);
 
-        var fileData = Json.stringify(userData);
+        var fileData = Json.stringify(userData, null, "\t");
         File.saveContent(Main.BASE_DIR + USER_DIR + username + ".json", fileData);
     }
 

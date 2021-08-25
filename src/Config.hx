@@ -1,5 +1,6 @@
 package ;
 
+import haxe.Json;
 import haxe.ui.containers.dialogs.Dialog;
 import haxe.ui.components.TextField;
 import haxe.ui.components.DropDown;
@@ -28,6 +29,8 @@ class ConfigNameDialog extends Dialog {
 
 @:build(haxe.ui.ComponentBuilder.build("assets/config-menu.xml"))
 class Config extends VBox {
+    public static var instance:Config;
+    static inline var CONFIG_FILENAME = "config.json";
 
     /** MUST be lowercase!!! **/
     static var quakeEnginePrefixes = ["quake", "vkquake", "glquake", "glqwcl", "qwcl", "winquake", "mark_v", "fte", "glpro", "dx8pro", "joequake", "darkplaces", "fitzquake", "qbism"];
@@ -36,34 +39,32 @@ class Config extends VBox {
     static var quakePak0sFound:Array<String>;
     static var quakePak1sFound:Array<String>;
 
-    var currentConfig:ConfigData;
-    var configs:Array<ConfigData> = new Array<ConfigData>();
-
-    public function new() {
-        super();
-        buttonAutoConfig.hide();
-        refreshValidate(null);
+    var currentData:ConfigJSON;
+    public var currentConfig(default, null):ConfigData;
+    var configs(get, set):Array<ConfigData>;
+    function get_configs() {
+        return currentData.configs;
+    }
+    function set_configs(value) {
+        currentData.configs = value;
+        return currentData.configs;
     }
 
-    @:bind( buttonScan, MouseEvent.CLICK )
-    function startQuakeScan(e) {
-        scanForQuakeFiles();
-        var foundQuake = quakePathsFound != null && quakePathsFound.length > 0;
-        generateSelect( menuModsSelect, quakePathsFound, "Mod Folders" );
-        var foundEngine = quakeEnginesFound != null && quakeEnginesFound.length > 0;
-        generateSelect( menuEngineSelect, quakeEnginesFound, "Engines" );
-        var foundPak0 = quakePak0sFound != null && quakePak0sFound.length > 0;
-        generateSelect( menuPak0Select, quakePak0sFound, "Paks" );
-        var foundPak1 = quakePak1sFound != null && quakePak1sFound.length > 0;
-        generateSelect( menuPak1Select, quakePak1sFound, "Paks" );
+    public static function init() {
+        instance = new Config();
+        return instance;
+    }
 
-        buttonScan.text = "FOUND " + (menuEngineSelect.dataSource.size + menuPak0Select.dataSource.size + menuPak1Select.dataSource.size) + " QUAKE FILES";
-        if ( foundQuake && foundEngine && foundPak0 && foundPak1 ) {
-            buttonAutoConfig.show();
-        } else {
-            buttonScan.text += "... BUT NOT ENOUGH TO AUTO CONFIG, SORRY";
-            buttonAutoConfig.hide();
-        }
+    private function new() {
+        super();
+        loadFromFileIfExists();
+    }
+
+    override function show() {
+        super.show();
+        loadFromFileIfExists();
+        buttonAutoConfig.hide();
+        refreshValidate(null);
     }
 
     inline function generateSelect(dropdown:DropDown, options:Array<String>, placeholderText:String) {
@@ -146,9 +147,11 @@ class Config extends VBox {
         var renameDialog = new ConfigNameDialog();
         renameDialog.onDialogClosed = function(e:DialogEvent) {
             if ( e.button == DialogButton.SAVE ) {
-                currentConfig.name = cast(e.target, ConfigNameDialog).rename.text;
+                currentConfig.name = cast(e.target, ConfigNameDialog).rename.text.replace('\"', ' ').replace('"', ' ').replace('\n', ' ').replace('\r', ' ').replace('\\', ' '); // sanitize
                 configDropdown.text = currentConfig.name;
                 configDropdown.selectedItem.text = currentConfig.name;
+                configs[configDropdown.selectedIndex].name = currentConfig.name; // idk why this is necessary? once I added file i/o it became a mess
+                refreshConfigList();
             }
         };
         renameDialog.rename.text = currentConfig.name;
@@ -173,6 +176,21 @@ class Config extends VBox {
         loadConfig(currentConfig);
     }
 
+    function loadFromFileIfExists() {
+        if ( !FileSystem.exists(Main.BASE_DIR + CONFIG_FILENAME) ) {
+            currentData = { currentIndex: -1, configs: new Array<ConfigData>() };
+            return;
+        }
+
+        var json = sys.io.File.getContent( Main.BASE_DIR + CONFIG_FILENAME );
+        currentData = Json.parse(json);
+        if ( currentData.currentIndex >= 0 && currentData.currentIndex < currentData.configs.length ) {
+            currentConfig = currentData.configs[currentData.currentIndex];
+            configDropdown.selectedIndex = currentData.currentIndex;
+        }
+        refreshConfigList();
+    }
+
     function loadConfig(cfg:ConfigData) {
         if ( cfg == null) {
             fieldEngine.text = fieldMods.text = fieldPak0.text = fieldPak1.text = "";
@@ -181,14 +199,18 @@ class Config extends VBox {
             return;
         }
 
+        // trace("loadConfig: " + cfg);
+        disableAutoRefresh = true;
         fieldEngine.text = cfg.quakeEnginePath;
         fieldMods.text = cfg.modFolderPath;
         fieldPak0.text = cfg.pak0path;
         fieldPak1.text = cfg.pak1path;
+        disableAutoRefresh = false;
 
         currentConfig = cfg;
         refreshValidate(null);
     }
+
 
     function saveConfig(cfg:ConfigData) {
         if ( cfg == null) return;
@@ -197,13 +219,42 @@ class Config extends VBox {
         cfg.modFolderPath = fieldMods.text;
         cfg.pak0path = fieldPak0.text;
         cfg.pak1path = fieldPak1.text;
+        if ( !configs.contains(cfg) ) {
+            configs.push(cfg);
+            trace("Config wasn't in the data array? uhh this shouldn't happen but trying to fix it anyway");
+        }
+
+        currentData.currentIndex = configDropdown.selectedIndex;
+        var json = Json.stringify(currentData, null, "\t");
+        sys.io.File.saveContent(Main.BASE_DIR + CONFIG_FILENAME, json);
     }
+
+    public static function validateConfig(config:ConfigData) {
+        if ( !isValidFile(config.quakeEnginePath, ".exe") )
+            return false;
+
+        if ( !isValidFolder(config.modFolderPath) )
+            return false;
+
+        if ( !isValidFile(config.pak0path, ".pak") || !isFileInPath(config.pak0path, config.modFolderPath) ) 
+            return false;
+
+        if ( !isValidFile(config.pak1path, ".pak") || !isFileInPath(config.pak1path, config.modFolderPath) )
+            return false;
+
+        return true;
+    }
+
+    var disableAutoRefresh = false;
 
     @:bind( fieldEngine, UIEvent.PROPERTY_CHANGE )
     @:bind( fieldMods, UIEvent.PROPERTY_CHANGE )
     @:bind( fieldPak0, UIEvent.PROPERTY_CHANGE )
     @:bind( fieldPak1, UIEvent.PROPERTY_CHANGE )
     function refreshValidate(e) {
+        if (disableAutoRefresh)
+            return;
+
         // needs an active config selected
         if ( currentConfig == null) {
             configForm.hide();
@@ -220,7 +271,7 @@ class Config extends VBox {
         var validConfig = true;
         var needsRefresh = false;
 
-        if ( fieldEngine.text != null && fieldEngine.text.toLowerCase().endsWith(".exe") && FileSystem.exists(fieldEngine.text) ) {
+        if ( isValidFile(fieldEngine.text, ".exe") ) {
             if ( currentConfig.quakeEnginePath != fieldEngine.text ) {
                 currentConfig.quakeEnginePath = fieldEngine.text;
             }
@@ -250,7 +301,7 @@ class Config extends VBox {
             validConfig = false;
         }
 
-        if ( fieldMods.text != null && FileSystem.exists(fieldMods.text) && FileSystem.isDirectory(fieldMods.text) ) {
+        if ( isValidFolder(fieldMods.text) ) {
             if ( currentConfig.modFolderPath != fieldMods.text ) {
                 currentConfig.modFolderPath = fieldMods.text;
             }
@@ -260,12 +311,12 @@ class Config extends VBox {
             validConfig = false;
         }
 
-        if ( fieldPak0.text != null && fieldPak0.text.toLowerCase().endsWith(".pak") && FileSystem.exists(fieldPak0.text) ) {
-            if ( currentConfig.pak0path != fieldPak0.text ) {
+        if ( isValidFile(fieldPak0.text, ".pak") ) {
+            if ( currentConfig.pak0path != fieldPak0.text )
                 currentConfig.pak0path = fieldPak0.text;
-            }
+
             if ( fieldMods.borderColor.r < 0.5) { // both pak path + mod path is valid
-                if (!cleanPath(currentConfig.pak0path).startsWith(cleanPath(currentConfig.modFolderPath)) ) { // but PAK isn't in there
+                if ( !isFileInPath(currentConfig.pak0path, currentConfig.modFolderPath) ) { // but PAK isn't in there
                     warningPak0.show();
                     validConfig = false;
                 } else {
@@ -279,12 +330,12 @@ class Config extends VBox {
             warningPak0.hide();
         }
 
-        if ( fieldPak1.text != null && fieldPak1.text.toLowerCase().endsWith(".pak") && FileSystem.exists(fieldPak1.text) ) {
-            if ( currentConfig.pak1path != fieldPak1.text ) {
+        if ( isValidFile(fieldPak1.text, ".pak")  ) {
+            if ( currentConfig.pak1path != fieldPak1.text )
                 currentConfig.pak1path = fieldPak1.text;
-            }
+
             if ( fieldMods.borderColor.r < 0.5) { // both pak path + mod path is valid
-                if (!cleanPath(currentConfig.pak1path).startsWith(cleanPath(currentConfig.modFolderPath)) ) { // but PAK isn't in there
+                if ( !isFileInPath(currentConfig.pak1path, currentConfig.modFolderPath) ) { // but PAK isn't in there
                     warningPak1.show();
                     validConfig = false;
                 } else {
@@ -303,7 +354,19 @@ class Config extends VBox {
             loadConfig(currentConfig);
         }
 
-        configBottom.hidden = !(currentConfig != null && validConfig);
+        configBottom.hidden = !(currentConfig != null && validConfig && validateConfig(currentConfig));
+    }
+
+    static function isValidFile(path:String, extension:String):Bool {
+        return path != null && path.toLowerCase().endsWith(extension) && FileSystem.exists(path);
+    }
+
+    static function isValidFolder(path:String):Bool {
+        return path != null && FileSystem.exists(path) && FileSystem.isDirectory(path);
+    }
+
+    static function isFileInPath(file:String, path:String) {
+        return cleanPath(file).startsWith(cleanPath(path));
     }
 
     @:bind( buttonConfigTest, MouseEvent.CLICK )
@@ -312,6 +375,16 @@ class Config extends VBox {
         if ( !testLaunch ) {
             trace("test launch failed! something is wrong");
         }
+    }
+
+    @:bind( buttonConfigFinish, MouseEvent.CLICK )
+    function finishConfig(e) {
+        saveConfig(currentConfig);
+        trace("using config: " + currentConfig);
+        if ( !Main.startupDone ) {
+            Main.continueStartupForRealNoSeriously();
+        }
+        hide();
     }
 
     @:bind( warningPak0Button, MouseEvent.CLICK )
@@ -396,6 +469,26 @@ class Config extends VBox {
         );
     }
 
+    @:bind( buttonScan, MouseEvent.CLICK )
+    function startQuakeScan(e) {
+        scanForQuakeFiles();
+        var foundQuake = quakePathsFound != null && quakePathsFound.length > 0;
+        generateSelect( menuModsSelect, quakePathsFound, "Mod Folders" );
+        var foundEngine = quakeEnginesFound != null && quakeEnginesFound.length > 0;
+        generateSelect( menuEngineSelect, quakeEnginesFound, "Engines" );
+        var foundPak0 = quakePak0sFound != null && quakePak0sFound.length > 0;
+        generateSelect( menuPak0Select, quakePak0sFound, "Paks" );
+        var foundPak1 = quakePak1sFound != null && quakePak1sFound.length > 0;
+        generateSelect( menuPak1Select, quakePak1sFound, "Paks" );
+
+        buttonScan.text = "FOUND " + (menuEngineSelect.dataSource.size + menuPak0Select.dataSource.size + menuPak1Select.dataSource.size) + " QUAKE FILES";
+        if ( foundQuake && foundEngine && foundPak0 && foundPak1 ) {
+            buttonAutoConfig.show();
+        } else {
+            buttonScan.text += "... BUT NOT ENOUGH TO AUTO CONFIG, SORRY";
+            buttonAutoConfig.hide();
+        }
+    }
 
     public static function scanForQuakeFiles() {
         trace("beginning Quake scan...");
@@ -517,7 +610,8 @@ class Config extends VBox {
 }
 
 typedef ConfigJSON = {
-    var configs: Array<String>;
+    var currentIndex:Int;
+    var configs: Array<ConfigData>;
 }
 
 typedef ConfigData = {
