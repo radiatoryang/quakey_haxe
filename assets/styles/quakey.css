@@ -16,9 +16,9 @@
     width: 48;
     height: 48;
     border-size: 0;
-    background-color: black;
-    border-color: gray;
-    color: gray;
+    background-color: black !important;
+    border-color: gray !important;
+    color: gray !important;
 }
 
 .mapProfile {
@@ -55,6 +55,16 @@
 
 .smallText {
     font-size: 12px;
+}
+
+.icon {
+    width: 24;
+    height: 24;
+    opacity: 0.5;
+}
+
+.icon:hover {
+    opacity:1.0;
 }
 
 .button, .textfield {
@@ -127,7 +137,9 @@
     background-color: #544d3d;
 }
 
-
+.gradient-left {
+    background-image: "images/gradient_black_half.png";
+}
 
 .scrollview {
     background-color: transparent;

@@ -73,13 +73,11 @@ class Launcher {
             if ( !isQuakeEX ) {
                 args.push('-basedir "' + baseDir + '"'); 
             } else {
-                if ( !FileSystem.exists(appidPath) ) { // you need a steam_appid.txt next to KexQuake or else you can't launch it from outside of Steam
+                if ( quakeExePath.toLowerCase().contains("steam") && !FileSystem.exists(appidPath) ) { // you need a steam_appid.txt next to KexQuake or else you can't launch it from outside of Steam
                     File.saveContent( appidPath, "2310" );
                 }
-                // args.push('+g_showintromovie 0');
-                // args.push('+kf_basepath "' + quakeFolderPath + '"');
-                // args.push('+kf_basepath C:/Users/Robert/AppData/Roaming/Quakey/mods/');
-                //args.push('+g_showintromovie 0');
+                // args.push('+kf_basepath "' + baseDir + '"');
+                args.push('+g_showintromovie 0');
             }
 
             if (mapData != null) {
@@ -99,8 +97,7 @@ class Launcher {
                 trace("LAUNCHING: " + quakeExePath + " " + args.join(" "));
             }
 
-            // use Steam protocol fallback because it's looking for a steam_appid in the current working directory, which we need for Quakey stuff
-            // TODO: create a steam_appid.txt in current working directory?
+            // use Steam protocol fallback... which doesn't quite work lol
             if ( isQuakeEX && quakeExePath.toLowerCase().contains("steam") && !FileSystem.exists(appidPath) ) {
                 for (i in 0...args.length) {
                     args[i] = args[i].replace("/", "\\");

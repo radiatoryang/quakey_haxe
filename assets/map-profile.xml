@@ -1,35 +1,42 @@
 <vbox styleName="mapProfile" width="100%" height="100%">
     <vbox id="background-preview" width="100%" height="100%">
-        <vbox id="background" width="100%" height="100%" padding="64">
-            <button text="<< BACK" id="backButton" />
-            <spacer height="16" />
+        <vbox id="background" width="100%" height="100%">
+            <vbox styleName="gradient-left" width="100%" height="100%" padding="64">
+                <button text="<< BACK" id="backButton" />
+                <spacer height="16" />
 
-            <label styleName="header-big" text="Map Title" id="title" />
-            <hbox id="authors" width="62%" continuous="true">
-                <labeloutlined text=" by " />
-            </hbox>
-            <spacer height="16" />
-            
-            <label text="Map Date" id="date" />
-            <hbox id="tags" width="62%" continuous="true">
-                <labeloutlined text=" tags: " />
-            </hbox>
-            <hbox width="100%" height="100%">
-                <vbox width="62%" height="100%">
-                    <scrollview width="100%" height="100%" contentWidth="100%" style="border:none;" >
-                        <label styleName="description" text="Description" id="description" width="100%" />
-                    </scrollview>
-                </vbox>
-                <spacer width="38%" />
-                <vbox width="320px" height="100%">
-                    <button id="buttonQueue" styleName="biggerButton" text="QUEUE DOWNLOAD" />
-                    <button id="buttonMark" styleName="bigButton" text="MARK AS DONE & HIDE" tooltip="hidden mods won't be recommended to you\n note: you can unhide it later in the Settings menu"/>
-                    <button id="buttonBrowse" styleName="bigButton" text="BROWSE LOCAL FILES" tooltip="browse the local mod install files in Windows Explorer" />
-                    <button id="buttonRedownload" styleName="bigButton" text="RE-DOWNLOAD + RE-INSTALL" tooltip="if this mod is broken for some reason,\nthis might repair it" />
-                    <button id="buttonDelete" styleName="bigButton" text="DELETE FILES & DE-QUEUE" tooltip="delete both the download and the mod install\n(but not any dependencies) and removes it from queue" />
-                    <button id="buttonQuad" styleName="bigButton" text="RATE & DISCUSS ON QUADDICTED" />
-                </vbox>
-            </hbox>
+                <label styleName="header-big" text="Map Title" id="title" />
+                <hbox id="authors" width="62%" continuous="true">
+                    <image resource="images/icon_user.png" width="24" height="24" opacity="0.69" />
+                    <spacer width="6" />
+                </hbox>
+                <spacer height="16" />
+                
+                <hbox width="100%">
+                    <image resource="images/icon_clock.png" width="24" height="24" opacity="0.69" />
+                    <label text="Map Date" id="date" />
+                </hbox>
+                <hbox id="tags" width="62%" continuous="true">
+                    <image resource="images/icon_tags.png" width="24" height="24" opacity="0.69" />
+                    <spacer width="6" />
+                </hbox>
+                <hbox width="100%" height="100%">
+                    <vbox width="62%" height="100%">
+                        <scrollview width="100%" height="100%" contentWidth="100%" style="border:none;" >
+                            <label styleName="description" text="Description" id="description" width="100%" />
+                        </scrollview>
+                    </vbox>
+                    <spacer width="38%" />
+                    <vbox width="320px" height="100%">
+                        <button id="buttonQueue" icon="images/icon_queue.png" styleName="biggerButton" text="QUEUE DOWNLOAD" />
+                        <button id="buttonMark" icon="images/icon_checkbox.png" styleName="bigButton" text="MARK AS DONE & HIDE" tooltip="hidden mods won't be recommended to you\n note: you can unhide it later in the Settings menu"/>
+                        <button id="buttonBrowse" icon="images/icon_folder.png" styleName="bigButton" text="BROWSE LOCAL FILES" tooltip="browse the local mod install files in Windows Explorer" />
+                        <button id="buttonRedownload" icon="images/icon_download.png" styleName="bigButton" text="RE-DOWNLOAD + RE-INSTALL" tooltip="if this mod is broken for some reason,\nthis might repair it" />
+                        <button id="buttonDelete" icon="images/icon_trash.png" styleName="bigButton" text="DELETE FILES & DE-QUEUE" tooltip="delete both the download and the mod install\n(but not any dependencies) and removes it from queue" />
+                        <button id="buttonQuad" icon="images/icon_talk.png" styleName="bigButton" text="RATE/DISCUSS ON QUADDICTED" />
+                    </vbox>
+                </hbox>
+            </vbox>
         </vbox>
     </vbox>
 </vbox>
