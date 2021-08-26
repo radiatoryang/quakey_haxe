@@ -49,6 +49,10 @@ class Main {
     public static var PROGRAM_DIR = "program_dir";
     public static inline var TEMPLATE_PATH = "template";
 
+    public static var oldTrace: (Dynamic, Null<haxe.PosInfos>) -> Void;
+    public static inline var LOG_PATH = "QuakeyLog.log";
+    public static var logOutput: sys.io.FileOutput;
+
     static inline var databaseURL = "https://www.quaddicted.com/reviews/quaddicted_database.xml";
 
     public static inline var FORCE_PROGRAM_PATH = false;
@@ -66,6 +70,9 @@ class Main {
         } else {
             BASE_DIR = PROGRAM_DIR; // if we can't use AppData, then just dump everything in the local path (portable mode?)
         }
+        // override Haxe's Logging so we can write logs to a file
+        oldTrace = haxe.Log.trace;
+        haxe.Log.trace = Log; 
 
         if (!FileSystem.exists(BASE_DIR) )
             FileSystem.createDirectory(BASE_DIR);
@@ -211,6 +218,19 @@ class Main {
         } else {
             return true;
         }
+    }
+
+    public static function Log(v:Dynamic, ?infos:haxe.PosInfos) {
+        oldTrace(v, infos);
+        if ( !FileSystem.exists(BASE_DIR + LOG_PATH) ) {
+            File.saveContent( BASE_DIR + LOG_PATH, "// QuakeyLog.log");
+        }
+        if ( logOutput == null )
+            logOutput = File.append( BASE_DIR + LOG_PATH, false );
+
+        logOutput.writeString("\n[" + Date.now().toString() + "]  " + Std.string(v));
+        logOutput.flush();
+        logOutput.flush(); // I don't know why we flush twice (lol) but I saw another logging repo do it
     }
 
 
