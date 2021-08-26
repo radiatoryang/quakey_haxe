@@ -1,5 +1,7 @@
 package ;
 
+import haxe.ui.containers.dialogs.Dialog;
+import haxe.ui.containers.dialogs.Dialogs;
 import haxe.ui.core.Component;
 import haxe.Timer;
 import haxe.ui.components.Button;
@@ -9,20 +11,13 @@ import haxe.io.Path;
 import sys.Http;
 import haxe.ui.macros.ComponentMacros;
 import haxe.ui.core.Screen;
-import sys.thread.ElasticThreadPool;
 
 import sys.thread.Thread;
-import haxe.ui.ToolkitAssets;
 import hxd.res.Loader;
-import haxe.ui.components.Image;
 import hxd.Res;
 import sys.FileSystem;
 import sys.io.File;
-import haxe.io.Bytes;
-import haxe.ui.containers.HBox;
-import hxd.Window.DisplayMode;
 import h2d.Font.SDFChannel;
-import haxe.ui.core.TextDisplay;
 import haxe.ui.backend.TextDisplayImpl;
 import haxe.ui.Toolkit;
 import haxe.ui.HaxeUIApp;
@@ -192,15 +187,30 @@ class Main {
 
     public static function moveToFrontButBeneathNotifications(frontComponent:Component) {
         if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Notify.instance ) {
-            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 1 );
+            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
         } else {
-            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length );
+            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 1 );
         }
     }
 
     public static function onExit() {
-        trace("exiting Quakey!");
-        return true;
+        if ( Downloader.instance != null && Downloader.instance.getCurrentMapDownloadProgress() >= 0 ) {
+            var newDialog = new Dialog();
+            newDialog.closable = false;
+            newDialog.draggable = false;
+            newDialog.buttons = haxe.ui.containers.dialogs.Dialog.DialogButton.CANCEL | haxe.ui.containers.dialogs.Dialog.DialogButton.OK;
+            newDialog.width = 500;
+            newDialog.dialogTitleLabel.text = "Download in progress! Quit?";
+            newDialog.onDialogClosed = function(e:haxe.ui.containers.dialogs.Dialog.DialogEvent) {
+                if ( e.button == haxe.ui.containers.dialogs.Dialog.DialogButton.OK ) {
+                    hxd.System.exit();
+                } 
+            };
+            newDialog.showDialog();
+            return false;
+        } else {
+            return true;
+        }
     }
 
 
