@@ -15,6 +15,14 @@
                 <hbox width="100%">
                     <image resource="images/icon_clock.png" width="24" height="24" opacity="0.69" />
                     <label text="Map Date" id="date" />
+                    <spacer width="24" />
+                    <image resource="images/icon_storage.png" width="24" height="24" opacity="0.69" />
+                    <spacer width="4" />
+                    <label text="File Size" id="sizeLabel" />
+                    <spacer width="24" />
+                    <image resource="images/icon_trophy.png" width="24" height="24" opacity="0.69" />
+                    <spacer width="4" />
+                    <label text="Rating" id="ratingLabel" />
                 </hbox>
                 <hbox id="tags" width="62%" continuous="true">
                     <image resource="images/icon_tags.png" width="24" height="24" opacity="0.69" />

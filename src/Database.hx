@@ -162,12 +162,12 @@ class Database {
 
         if ( span.getTotalMonths() > 1 ) {
             return span.formatPartial(['%y years', '%m months']).join(', ') + " ago";
-        } else if ( span.getTotalDays() > 24 ) {
-            return span.format("%d days ago");
+        } else if ( span.getTotalHours() > 24 ) {
+            return span.format("%a days ago");
         } else if ( span.getTotalHours() > 1 ) {
-            return span.format("%h hours ago");
+            return span.format("%c hours ago");
         } else if ( span.getTotalMinutes() > 1) {
-            return span.format("%i minutes ago");
+            return span.format("%e minutes ago");
         } else {
             return "just now";
         }

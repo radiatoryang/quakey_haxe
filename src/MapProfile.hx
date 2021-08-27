@@ -54,56 +54,69 @@ class MapProfile extends VBox {
             authorContainer.addComponent(newButton);
         }
 
-        var date = findComponent("date", Label);
+        //var date = findComponent("date", Label);
         if (mapData.date != null) {
             var month = Database.getMonthName( mapData.date.getMonth() );
             date.text = mapData.date.format(' %d $month %Y');
+            date.tooltip = Database.getRelativeTime(mapData.date);
         } else {
             date.text = "(undated)";
+            date.tooltip = null;
         }
+        date.filter = textFilter;
 
         // DISPLAY FILE SIZE
+        sizeLabel.text = "";
         if ( mapData.size != null && mapData.size > 0) {
-            date.text += "    " + Std.string(mapData.size) + "mb";
+            sizeLabel.text = Std.string(mapData.size) + "mb";
         }
         if ( mapData.techinfo != null && mapData.techinfo.requirements != null && mapData.techinfo.requirements.length > 0 ) {
             var dependencySize = 0.0;
+            var tooltip = "dependencies: "; // BUG: don't modify Label.tooltip in place, must assign it at the end
             for( dependency in mapData.techinfo.requirements ) {
                 if ( Database.instance.db[dependency] != null && Database.instance.db[dependency].size != null ) {
-                    dependencySize += Database.instance.db[dependency].size;
+                    var dep = Database.instance.db[dependency];
+                    dependencySize += dep.size;
+                    tooltip += "\n(+ " + dep.size + "mb) " + dep.title;
                 } else {
                     trace('dependency ID $dependency was invalid! someone tell Quaddicted');
+                    tooltip += "\n(" + dependency + ") INVALID ID! Please tell Quaddicted about this error!";
                 }
             }
-            date.text += " (+ " + Std.string(dependencySize) + "mb)";
+            sizeLabel.text += " (+ " + Std.string(dependencySize) + "mb)";
+            sizeLabel.tooltip = tooltip;
         }
+        sizeLabel.filter = textFilter;
 
         // DISPLAY RATING
         if ( mapData.rating != null && mapData.rating > 0) {
-            date.text += "    " + Std.string( Math.round(Math.sqrt(mapData.rating * 0.2) * 100) ) + "%";
-            if ( mapData.rating >= 4.75 ) {
-                date.text += " (GOD MODE!)";
-            } else if ( mapData.rating >= 4.5 ) {
-                date.text += " (Highly recommended!)";
+            // displaying the raw normalized user score from Quaddicted is a bit misleading and implies the map is rated a lot worse than it actually is
+            // so instead, we divide by 5 and square root, to sort of un-normalize the raw score, which imo is a better indicator
+            ratingLabel.text = Std.string( Math.round(Math.sqrt(mapData.rating * 0.2) * 100) ) + "%";
+            if ( mapData.rating >= 4.6 ) {
+                ratingLabel.text += " (GOD MODE!)";
+            } else if ( mapData.rating >= 4.3 ) {
+                ratingLabel.text += " (Highly recommended!)";
             } else if ( mapData.rating >= 4.0) {
-                date.text += " (Recommended!)";
+                ratingLabel.text += " (Recommended!)";
             } else if ( mapData.rating >= 3.5) {
-                date.text += " (Great)";
+                ratingLabel.text += " (Great)";
             } else if ( mapData.rating >= 3.0) {
-                date.text += " (Good)";
+                ratingLabel.text += " (Good)";
             } else if ( mapData.rating >= 2.5) {
-                date.text += " (Average)";
+                ratingLabel.text += " (Average)";
             } else if ( mapData.rating >= 2.0) {
-                date.text += " (Below Average)";
+                ratingLabel.text += " (Below Average)";
             } else {
-                date.text += " (Not Recommended)";
+                ratingLabel.text += " (Not Recommended)";
             }
+            ratingLabel.tooltip = "raw normalized user score: " + mapData.rating;
         } else {
-            date.text += "(unrated)";
+            ratingLabel.text = "(unrated)";
         }
-        date.filter = textFilter;
-        date.tooltip = Database.getRelativeTime(mapData.date);
+        ratingLabel.filter = textFilter;
 
+        // TAGS
         var tagsContainer = findComponent("tags", HBox);
         if ( mapData.tags != null && mapData.tags.length > 0) {
             for(tag in mapData.tags) {
