@@ -2,6 +2,36 @@
     background-color: #201b0e;
 }
 
+.icon {
+    width: 24;
+    height: 24;
+    opacity: 0.5;
+}
+
+.icon:hover {
+    opacity:1.0;
+}
+
+.button, .textfield {
+    background-color: #363020;
+    border-size: 2;
+    border-top-color: #544d3d;
+    border-left-color: #544d3d;
+    border-right-color: #544d3d;
+    border-bottom-color: #423b26;
+}
+
+.button:hover, .textfield:hover {
+    background-color: #807060;
+    border-size: 2;
+    border-color: white;
+}
+
+
+.textfield {
+    background-color: #423b26;
+}
+
 #menuBar {
     background-color: black;
     width: 100%;
@@ -16,9 +46,18 @@
     width: 48;
     height: 48;
     border-size: 0;
-    background-color: black !important;
-    border-color: gray !important;
-    color: gray !important;
+    background-color: black;
+    border-color: gray;
+    color: gray;
+}
+
+.minor-tick, .major-tick {
+    background-color: gray;
+}
+
+.horizontal-range .range-value {
+    background: #807060 #544d3d vertical;
+    height: 100%;
 }
 
 .mapProfile {
@@ -57,30 +96,9 @@
     font-size: 12px;
 }
 
-.icon {
-    width: 24;
-    height: 24;
-    opacity: 0.5;
-}
 
-.icon:hover {
-    opacity:1.0;
-}
 
-.button, .textfield {
-    background-color: #363020;
-    border-size: 2;
-    border-top-color: #544d3d;
-    border-left-color: #544d3d;
-    border-right-color: #544d3d;
-    border-bottom-color: #423b26;
-}
-
-.textfield {
-    background-color: #423b26;
-}
-
-#config {
+#config, #search {
     background-color: black;
     padding: 48;
 }
@@ -107,6 +125,14 @@
 
 #configform .button {
     height: 100%;
+}
+
+#search .checkbox {
+    margin: 16;
+}
+
+#searchFilters .slider {
+    width: 100%;
 }
 
 .bigButton {

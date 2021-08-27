@@ -1,5 +1,8 @@
 package ;
 
+import haxe.ui.events.ScrollEvent;
+import haxe.ui.core.Screen;
+import haxe.ui.core.Component;
 import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
 
@@ -7,6 +10,8 @@ import haxe.ui.events.MouseEvent;
 class MainView extends VBox {
 
     public static var instance:MainView;
+    public static inline var MENU_BAR_HEIGHT = 48;
+    var mapLists: Array<MapList> = new Array<MapList>();
 
     public function new() {
         super();
@@ -15,7 +20,7 @@ class MainView extends VBox {
 
     override function onInitialize() {
         refreshQueue();
-        //mapLists.push( findComponent("queue") );
+        mapLists.push( findComponent("queue") );
 
         var newReleases = findComponent("newReleases", MapList);
         var latest = Lambda.array(Database.instance.db);
@@ -30,7 +35,7 @@ class MainView extends VBox {
         }
         var recentMonth = Database.getMonthName( latest[mostRecentDateIndex].date.getMonth() );
         newReleases.updateDescription("updated " + latest[mostRecentDateIndex].date.format('%d $recentMonth %Y') );
-        //mapLists.push(newReleases);
+        mapLists.push(newReleases);
         
         var rated = Lambda.array(Database.instance.db);
 
@@ -41,7 +46,7 @@ class MainView extends VBox {
         for( i in 0... 8) {
             highlyRated.addMapButton( ratedModern[i] );
         }
-        //mapLists.push(highlyRated);
+        mapLists.push(highlyRated);
 
         var highlyRatedOld = findComponent("highlyRatedOld", MapList);
         var ratedClassic = rated.filter( map -> map.rating >= 3.75 && map.date.getYear() < 2010 );
@@ -49,20 +54,21 @@ class MainView extends VBox {
         for( i in 0... 8) {
             highlyRatedOld.addMapButton( ratedClassic[i] );
         }
-        //mapLists.push(highlyRatedOld);
+        mapLists.push(highlyRatedOld);
 
         var ratedHard = rated.filter( map -> map.rating >= 3.0 && map.tags != null && map.tags.contains("hard") );
         hxd.Rand.create().shuffle(ratedHard);
         for( i in 0... 8) {
             listHard.addMapButton( ratedHard[i] );
         }
+        mapLists.push(listHard);
 
         var ratedSewer = rated.filter( map -> map.rating >= 3.0 && map.tags != null && (map.tags.contains("sewer") || map.tags.contains("sewers") || map.tags.contains("cistern")) );
         hxd.Rand.create().shuffle(ratedSewer);
         for( i in 0... 8) {
             listSewer.addMapButton( ratedSewer[i] );
         }
-        //mapLists.push
+        mapLists.push(listSewer);
     }
 
     // public function refreshAllMapButtons() {
@@ -89,5 +95,25 @@ class MainView extends VBox {
     @:bind(menuButton, MouseEvent.CLICK)
     private function openMenu(e:MouseEvent) {
         Config.instance.show();
+    }
+
+    @:bind(searchButton, MouseEvent.CLICK)
+    private function openSearch(e) {
+        Search.instance.showSearch();
+    }
+
+    @:bind(mainScroll, ScrollEvent.CHANGE)
+    private function onScroll(e) {
+        for( mapList in mapLists ) {
+            if ( mapList.screenTop < Screen.instance.height ) {
+                mapList.onScroll(null);
+            }
+        }
+    }
+
+    public static function moveBelowMenuBar(comp:Component) {
+        comp.left = 0;
+        comp.top = MainView.MENU_BAR_HEIGHT;
+        comp.height = haxe.ui.core.Screen.instance.height - MainView.MENU_BAR_HEIGHT;
     }
 }

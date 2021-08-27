@@ -17,40 +17,14 @@ class MapButton extends Button {
         super();
     }
 
-    // public function get_mapTitle() {
-    //     mapTitle = mapData != null ? mapData.title : "";
-    //     return mapTitle;
-    // }
-    
-    // public function get_mapState() {
-    //     mapState = switch( Database.instance.getMapStatus(mapData.id) ) {
-    //         case NotQueued: "";
-    //         case Queued: "QUEUED...";
-    //         case Downloading: "DOWNLOADING...";
-    //         case Downloaded: "INSTALLING...";
-    //         case Installed: "READY TO PLAY";
-    //     }
-    //     mapStateText.hidden = mapState == "";
-    //     return mapState;
-    // }
-
     public override function onInitialize() {
         super.onInitialize();
-
-        // uiTitle = new LabelOutlined();
-        // uiTitle.text = mapData.title;
-        // uiTitle.padding = 16;
-        // addComponent(uiTitle);
         mapTitleText.text = mapData.title;
-
-        // uiState = new Label();
-        // uiState.addClass("badge");
-        // addComponent(uiState);
-
         tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others" : "" ) + (mapData.date != null ? mapData.date.format(" (%Y)") : "");
+    }
 
+    public function onVisibleInScreenBounds() {
         Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
-
         Database.instance.subscribeToState(mapData.id, onRefresh);
     }
 

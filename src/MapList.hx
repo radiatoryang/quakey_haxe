@@ -6,6 +6,7 @@ import haxe.ui.components.Label;
 import Database.MapEntry;
 import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
+import haxe.ui.core.Screen;
 
 using DateTools;
 
@@ -63,12 +64,23 @@ class MapList extends VBox {
     @:bind(buttonPrevious, MouseEvent.CLICK)
     private function onPrevious(e:MouseEvent) {
         mapScroll.hscrollPos -= mapScroll.width;
+        onScroll(null);
     }
 
     @:bind(buttonNext, MouseEvent.CLICK)
     private function onNext(e:MouseEvent) {
         mapScroll.hscrollPos += mapScroll.width;
+        onScroll(null);
         //mapScroll.hscrollPos += mapScroll.hscrollPageSize;
+    }
+
+    @:bind(mapScroll, haxe.ui.events.ScrollEvent.CHANGE)
+    public function onScroll(e) {
+        for(button in mapButtons) {
+            if ( button.screenX > 0 && button.screenX < Screen.instance.width && button.screenY > 0 && button.screenY < Screen.instance.height ) {
+                button.onVisibleInScreenBounds();
+            }
+        }
     }
 
     // private var _fadeTimer:Timer = null;

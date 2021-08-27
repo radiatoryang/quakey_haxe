@@ -90,9 +90,7 @@ class MapProfile extends VBox {
 
         // DISPLAY RATING
         if ( mapData.rating != null && mapData.rating > 0) {
-            // displaying the raw normalized user score from Quaddicted is a bit misleading and implies the map is rated a lot worse than it actually is
-            // so instead, we divide by 5 and square root, to sort of un-normalize the raw score, which imo is a better indicator
-            ratingLabel.text = Std.string( Math.round(Math.sqrt(mapData.rating * 0.2) * 100) ) + "%";
+            ratingLabel.text = Std.string( mapData.ratingPercent ) + "%";
             if ( mapData.rating >= 4.6 ) {
                 ratingLabel.text += " (GOD MODE!)";
             } else if ( mapData.rating >= 4.3 ) {
@@ -141,6 +139,7 @@ class MapProfile extends VBox {
     public override function show() {
         super.show();
         forceRefresh();
+        MainView.moveBelowMenuBar(this);
     }
 
     function forceRefresh() {

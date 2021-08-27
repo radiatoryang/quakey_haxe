@@ -43,7 +43,7 @@ class Launcher {
 
                         // still didn't find one? then just choose the alphabetical one
                         if ( startmap == null) { 
-                            mapNames.sort( Downloader.sortAlphabetically );
+                            mapNames.sort( Search.sortAlphabetically );
                             startmap = mapNames[0];
                         }
                     }

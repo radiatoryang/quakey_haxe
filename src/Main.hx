@@ -189,6 +189,9 @@ class Main {
         Downloader.init();
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 
+        app.addComponent( Search.init() );
+        Search.instance.hide();
+
         splashScreen.hide();
     }
 

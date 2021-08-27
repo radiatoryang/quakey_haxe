@@ -578,20 +578,6 @@ class Downloader {
         }
     }
 
-    public static inline function sortAlphabetically(a:String, b:String):Int {
-        a = a.toUpperCase();
-        b = b.toUpperCase();
-      
-        if (a < b) {
-          return -1;
-        }
-        else if (a > b) {
-          return 1;
-        } else {
-          return 0;
-        }
-    }
-
     /** generate data for mapdb.json that KexQuake / QuakeEX needs **/
     static function getMapManifest(mapData:MapEntry):MapManifest {
         var newManifest = {
