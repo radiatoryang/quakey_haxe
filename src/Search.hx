@@ -1,5 +1,6 @@
 package ;
 
+import datetime.DateTime;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
 import haxe.ui.components.Slider;
@@ -11,6 +12,9 @@ using StringTools;
 @:build(haxe.ui.ComponentBuilder.build("assets/search.xml"))
 class Search extends VBox {
     public static var instance:Search;
+
+    /** Quake's release year; the year of the earliest possible mod? **/
+    static inline var YEAR_ZERO = 1996;
 
     var currentSearchObject:SearchGroup;
     var currentSearchResults:Array<MapEntry>;
@@ -25,20 +29,34 @@ class Search extends VBox {
     private function new() {
         super();
         disableAutoRefresh = true;
+
+        // update slider maximums?
+        yearSlider.max = DateTime.now().getYear() - YEAR_ZERO;
     }
 
     override function onResized() {
+        disableAutoRefresh = true;
         super.onResized();
+        searchContents.columns = Math.floor(searchResults.contentWidth / 300); // divide by width of MapButton?
+        height = haxe.ui.core.Screen.instance.height - MainView.MENU_BAR_HEIGHT;
+        disableAutoRefresh = false;
     }
 
     private function resetSliders() {
-
+        disableAutoRefresh = true;
+        resetSlider(yearSlider);
+        resetSlider(authorCountSlider);
+        resetSlider(ratingSlider);
+        resetSlider(sizeSlider);
+        disableAutoRefresh = false;
+        refreshSearch(null);
     }
 
     public function showSearch(?searchQuery:String, ?textFilter:TextFilter) {
         disableAutoRefresh = true;
         show();
         Main.moveToFrontButBeneathNotifications(this);
+        searchContents.columns = Math.floor(searchResults.contentWidth / 300); // divide by width of MapButton
         MainView.moveBelowMenuBar(this);
 
         searchBar.text = searchQuery != null ? searchQuery : "";
@@ -48,7 +66,7 @@ class Search extends VBox {
         disableAutoRefresh = false;
     }
 
-    @:bind(searchBar, UIEvent.CHANGE)
+    @:bind(searchBar, UIEvent.PROPERTY_CHANGE)
     @:bind(checkTitle, MouseEvent.CLICK)
     @:bind(checkTags, MouseEvent.CLICK)
     @:bind(checkAuthors, MouseEvent.CLICK)
@@ -63,9 +81,14 @@ class Search extends VBox {
 
         trace("refreshing search");
 
-        // generate all the data we need
+        // generate all the data we need and update UI
         currentSearchObject = generateSearchObject();
         currentSearchResults = getSearchResults(currentSearchObject);
+        searchResultCount.text = currentSearchResults.length + " results found";
+        yearLabel.text = "Year: " + Math.round(YEAR_ZERO + yearSlider.start) + " - " + Math.round(YEAR_ZERO + yearSlider.end);
+        sizeLabel.text = "Size: " + Math.round(sizeSlider.start) + " - " + Math.round(sizeSlider.end) + " mb";
+        ratingLabel.text = "Rating: " + Math.round(ratingSlider.start) + " - " + Math.round(ratingSlider.end) + "%";
+        authorCountLabel.text = "Authors: " + Math.round(authorCountSlider.start) + " - " + Math.round(authorCountSlider.end);
 
         // clear current search result buttons (TODO: is pooling necessary? a better way to do this?)
         while(currentSearchButtons.length > 0) {
@@ -73,11 +96,16 @@ class Search extends VBox {
             oldButton.hide();
             oldButton.dispose();
         }
-        for(result in currentSearchResults) {
+        Downloader.instance.cancelAllImageDownloads();
+        
+        for(index => result in currentSearchResults) {
             var newButton = new MapButton();
             currentSearchButtons.push(newButton);
             newButton.mapData = result;
+            newButton.loadImageOnInit = true;
             searchContents.addComponent(newButton);
+            if ( index > 20 ) // debug
+                break;
         }
 
     }
@@ -96,7 +124,7 @@ class Search extends VBox {
 
         var numberFilters = new Array<SearchNumber>();
         if ( isSliderUsed(yearSlider) )
-            numberFilters.push( { min: 1996 + yearSlider.start, max: 1996 + yearSlider.end, filterType: NumberFilter.Year} );
+            numberFilters.push( { min: YEAR_ZERO + yearSlider.start, max: YEAR_ZERO + yearSlider.end, filterType: NumberFilter.Year} );
         if ( isSliderUsed(sizeSlider) )
             numberFilters.push( { min: sizeSlider.start, max: sizeSlider.end, filterType: NumberFilter.Size} );
         if ( isSliderUsed(ratingSlider) )
@@ -114,6 +142,12 @@ class Search extends VBox {
             return true;
         else
             return false;
+    }
+
+    private inline function resetSlider(slider:Slider) {
+        slider.start = slider.min;
+        slider.end = slider.max;
+        slider.validateNow();
     }
 
     /** main search function; static because user-generated playlists in MainView will also use this search to populate themselves, this isn't just for search page!

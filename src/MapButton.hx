@@ -12,6 +12,7 @@ using StringTools;
 class MapButton extends Button {
 
     public var mapData:MapEntry;
+    public var loadImageOnInit = false;
 
     public function new() {
         super();
@@ -21,8 +22,14 @@ class MapButton extends Button {
         super.onInitialize();
         mapTitleText.text = mapData.title;
         tooltip = "by " + mapData.authors[0] + (mapData.authors.length > 1 ? " + " + mapData.authors.length + " others" : "" ) + (mapData.date != null ? mapData.date.format(" (%Y)") : "");
+        if ( loadImageOnInit ) {
+            onVisibleInScreenBounds();
+        }
     }
 
+    /** download and cache the map image thumbnail from Quaddicted; 
+        usually only call this when the MapButton itself becomes visible on-screen, 
+        since there's no point in downloading images for an off-screen button **/
     public function onVisibleInScreenBounds() {
         Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
         Database.instance.subscribeToState(mapData.id, onRefresh);

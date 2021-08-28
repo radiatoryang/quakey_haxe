@@ -39,7 +39,7 @@ class Downloader {
 
     private function new() {
         downloadThreadPool = new ElasticThreadPool(1, 5.0);
-        threadPool = new ElasticThreadPool(2, 5.0); // need to keep this ThreadPool at 2 or less otherwise the CPU usage gets really intense
+        threadPool = new ElasticThreadPool(3, 5.0); 
         localLoader = new hxd.res.Loader( new hxd.fs.LocalFileSystem(Main.BASE_DIR, "") );
 
         refreshTimer = new Timer(1000);
@@ -496,6 +496,10 @@ class Downloader {
         } else {
             trace("tried to delete install /" + getModInstallFolderName(Database.instance.db[mapID]) + "/ but it was already deleted?");
         }
+    }
+
+    public function cancelAllImageDownloads() {
+        @:privateAccess while(threadPool.queue.pop(false) != null) { }
     }
 
     public function getImageAsync(filename:String, callback:String->Void) {

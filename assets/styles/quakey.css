@@ -29,7 +29,7 @@
 
 
 .textfield {
-    background-color: #423b26;
+    background-color: #363020;
 }
 
 #menuBar {
@@ -98,7 +98,7 @@
 
 
 
-#config, #search {
+#config {
     background-color: black;
     padding: 48;
 }
@@ -125,6 +125,12 @@
 
 #configform .button {
     height: 100%;
+}
+
+#search {
+    background-color: black;
+    padding-left: 48;
+    padding-top: 32;
 }
 
 #search .checkbox {

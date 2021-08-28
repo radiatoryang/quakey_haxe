@@ -246,6 +246,7 @@ class MapProfile extends VBox {
     }
 
     public static function openMapProfile(mapData:MapEntry) {
+        trace("openMapProfile: " + mapData.id);
         if ( MapProfile.cache.exists(mapData.id)==false ) {
             var mapProfile = new MapProfile();
             // mapProfile.percentWidth = 100;

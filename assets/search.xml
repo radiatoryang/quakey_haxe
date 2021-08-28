@@ -1,9 +1,9 @@
-<vbox id="search" width="100%" height="100%">
+<vbox id="search" width="100%" height="672">
     <style source="styles/quakey.css" />
     <hbox width="100%" height="48" continuous="true">
         <image resource="images/icon_search.png" width="48" height="48" opacity="0.69" />
         <spacer width="4" />
-        <textfield id="searchBar" width="640" height="100%" style="font-size: 32;" />
+        <textfield id="searchBar" width="480" height="100%" style="font-size: 32;" />
         <spacer width="16" />
         <hbox>
             <checkbox id="checkTitle" text="Title" selected="true" />
@@ -17,19 +17,19 @@
     </hbox>
     <spacer height="16" />
     <hbox width="100%" height="100%">
-        <vbox width="320" height="100%">
+        <vbox width="256" height="100%">
             <vbox id="searchFilters" width="100%" height="320">
-                <label id="yearLabel" text="Year: 1996-2021" />
+                <label id="yearLabel" text="Year" />
                 <slider id="yearSlider" min="0" max="25" start="0" end="25" step="1" majorTicks="5" />
                 <spacer height="16" />
-                <label id="sizeLabel" text="Size: 0-250mb" />
-                <slider id="sizeSlider" min="0" max="250" start="0" end="250" step="25" majorTicks="25" />
+                <label id="sizeLabel" text="Size" />
+                <slider id="sizeSlider" min="0" max="300" start="0" end="300" step="5" majorTicks="25" />
                 <spacer height="16" />
-                <label id="ratingLabel" text="Rating: 0-100%" />
-                <slider id="ratingSlider" start="0" end="100" step="5" minorTicks="10" majorTicks="25" />
+                <label id="ratingLabel" text="Rating" />
+                <slider id="ratingSlider" min="0" max="100" start="0" end="100" step="5" minorTicks="10" majorTicks="30" />
                 <spacer height="16" />
-                <label id="authorCountLabel" text="Authors 0-10+" />
-                <slider id="authorCountSlider" min="0" max="10" start="0" end="10" step="1" minorTicks="1" majorTicks="5" />
+                <label id="authorCountLabel" text="Authors" />
+                <slider id="authorCountSlider" min="0" max="20" start="0" end="20" step="1" minorTicks="1" majorTicks="5" />
             </vbox>
             <listview id="searchSuggestions" width="100%" height="100%">
 
@@ -39,8 +39,8 @@
         <vbox width="100%" height="100%">
             <label id="searchResultCount" text="0 results" />
             <scrollview id="searchResults" width="100%" height="100%" contentWidth="100%">
-                <hbox id="searchContents" continuous="true">
-                </hbox>
+                <grid id="searchContents" columns="3">
+                </grid>
             </scrollview>
         </vbox>
     </hbox>

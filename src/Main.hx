@@ -70,9 +70,12 @@ class Main {
         } else {
             BASE_DIR = PROGRAM_DIR; // if we can't use AppData, then just dump everything in the local path (portable mode?)
         }
+
         // override Haxe's Logging so we can write logs to a file
+        File.saveContent( BASE_DIR + LOG_PATH, "// QuakeyLog.log");
         oldTrace = haxe.Log.trace;
         haxe.Log.trace = Log; 
+
 
         if (!FileSystem.exists(BASE_DIR) )
             FileSystem.createDirectory(BASE_DIR);
@@ -106,7 +109,7 @@ class Main {
             startConnectionTest();
 
             // hxd.Window.getInstance().displayMode = DisplayMode.FullscreenResize;
-            hxd.Window.getInstance().onClose = onExit;
+            hxd.Window.getInstance().onClose = confirmExit;
         });
     }
 
@@ -203,7 +206,7 @@ class Main {
         }
     }
 
-    public static function onExit() {
+    public static function confirmExit() {
         if ( Downloader.instance != null && Downloader.instance.getCurrentMapDownloadProgress() >= 0 ) {
             var newDialog = new Dialog();
             newDialog.closable = false;
@@ -225,9 +228,6 @@ class Main {
 
     public static function Log(v:Dynamic, ?infos:haxe.PosInfos) {
         oldTrace(v, infos);
-        if ( !FileSystem.exists(BASE_DIR + LOG_PATH) ) {
-            File.saveContent( BASE_DIR + LOG_PATH, "// QuakeyLog.log");
-        }
         if ( logOutput == null )
             logOutput = File.append( BASE_DIR + LOG_PATH, false );
 
