@@ -37,7 +37,12 @@
         </vbox>
         <spacer width="16" />
         <vbox width="100%" height="100%">
-            <label id="searchResultCount" text="0 results" />
+            <hbox width="100%">
+                <label id="searchResultCount" text="0 results" />
+                <spacer width="100%" />
+                <dropdown id="searchSorting">
+                </dropdown>
+            </hbox>
             <scrollview id="searchResults" width="100%" height="100%" contentWidth="100%">
                 <grid id="searchContents" columns="3">
                 </grid>

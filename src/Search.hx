@@ -17,8 +17,10 @@ class Search extends VBox {
     static inline var YEAR_ZERO = 1996;
 
     var currentSearchObject:SearchGroup;
+
     var currentSearchResults:Array<MapEntry>;
     var currentSearchButtons:Array<MapButton> = new Array<MapButton>();
+
     var disableAutoRefresh = false;
 
     public static function init() {
@@ -29,9 +31,23 @@ class Search extends VBox {
     private function new() {
         super();
         disableAutoRefresh = true;
+    }
+
+    private override function onInitialize() {
+        super.onInitialize();
 
         // update slider maximums?
         yearSlider.max = DateTime.now().getYear() - YEAR_ZERO;
+
+        // initialize dropdown
+        for( sortType in Type.allEnums(SortFilter)) {
+            if ( sortType == SortFilter.Shuffle ) {
+                searchSorting.dataSource.add( {text: Std.string(sortType), sortType: sortType, ascending: true });
+            } else {
+                searchSorting.dataSource.add( {text: Std.string(sortType) + (sortType == SortFilter.Title ? " A-Z" : ", ascending"), sortType: sortType, ascending: true });
+                searchSorting.dataSource.add( {text: Std.string(sortType) + (sortType == SortFilter.Title ? " Z-A" : ", descending"), sortType: sortType, ascending: false });
+            }
+        }
     }
 
     override function onResized() {
@@ -66,6 +82,14 @@ class Search extends VBox {
         disableAutoRefresh = false;
     }
 
+    @:bind(searchSorting, UIEvent.CHANGE)
+    function onChangeSort(e) {
+        if ( disableAutoRefresh )
+            return;
+
+        refreshSearch(null);
+    }
+
     @:bind(searchBar, UIEvent.PROPERTY_CHANGE)
     @:bind(checkTitle, MouseEvent.CLICK)
     @:bind(checkTags, MouseEvent.CLICK)
@@ -84,6 +108,8 @@ class Search extends VBox {
         // generate all the data we need and update UI
         currentSearchObject = generateSearchObject();
         currentSearchResults = getSearchResults(currentSearchObject);
+        currentSearchResults = getSortedMaps(currentSearchResults, currentSearchObject.sorting);
+
         searchResultCount.text = currentSearchResults.length + " results found";
         yearLabel.text = "Year: " + Math.round(YEAR_ZERO + yearSlider.start) + " - " + Math.round(YEAR_ZERO + yearSlider.end);
         sizeLabel.text = "Size: " + Math.round(sizeSlider.start) + " - " + Math.round(sizeSlider.end) + " mb";
@@ -97,7 +123,7 @@ class Search extends VBox {
             oldButton.dispose();
         }
         Downloader.instance.cancelAllImageDownloads();
-        
+
         for(index => result in currentSearchResults) {
             var newButton = new MapButton();
             currentSearchButtons.push(newButton);
@@ -132,9 +158,10 @@ class Search extends VBox {
         if ( isSliderUsed(authorCountSlider) )
             numberFilters.push( { min: authorCountSlider.start, max: authorCountSlider.end, filterType: NumberFilter.AuthorCount} );
 
-        // TODO: sorting
+        var sortSelect = searchSorting.selectedItem;
+        var sortFilter:SearchSort = { sortType: sortSelect.sortType, ascending: sortSelect.ascending };
 
-        return {textFilters: textFilters, numberFilters: numberFilters};
+        return {textFilters: textFilters, numberFilters: numberFilters, sorting: sortFilter };
     }
 
     private inline function isSliderUsed(slider:Slider):Bool {
@@ -216,34 +243,37 @@ class Search extends VBox {
     public static function getSortedMaps(mapArray:Array<Database.MapEntry>, sort:SearchSort) {
         var sortedArray = mapArray.copy();
         switch (sort.sortType) {
+            case Relevance:
+                hxd.Rand.create().shuffle(sortedArray); // TODO: calculate relevance score
             case Shuffle:
-                return hxd.Rand.create().shuffle(sortedArray);
+                hxd.Rand.create().shuffle(sortedArray);
             case Title:
                 if ( sort.ascending )
-                    return sortedArray.sort( (a,b) -> sortAlphabetically(a.title, b.title) );
+                    sortedArray.sort( (a,b) -> sortAlphabetically(a.title, b.title) );
                 else
-                    return sortedArray.sort( (b,a) -> sortAlphabetically(a.title, b.title) );
+                    sortedArray.sort( (b,a) -> sortAlphabetically(a.title, b.title) );
             case Year:
                 if ( sort.ascending )
-                    return sortedArray.sort( (a, b) -> (a.date != null ? a.date.getYear() : 0) - (b.date != null ? b.date.getYear() : 0) );
+                    sortedArray.sort( (a, b) -> (a.date != null ? a.date.getYear() : 0) - (b.date != null ? b.date.getYear() : 0) );
                 else 
-                    return sortedArray.sort( (b, a) -> (a.date != null ? a.date.getYear() : 0) - (b.date != null ? b.date.getYear() : 0) );
+                    sortedArray.sort( (b, a) -> (a.date != null ? a.date.getYear() : 0) - (b.date != null ? b.date.getYear() : 0) );
             case Size:
                 if ( sort.ascending )
-                    return sortedArray.sort( (a, b) -> Math.round((a.size != null ? a.size : 0) - (b.size != null ? b.size : 0)) );
+                    sortedArray.sort( (a, b) -> Math.round((a.size != null ? a.size : 0) - (b.size != null ? b.size : 0)) );
                 else 
-                    return sortedArray.sort( (b, a) -> Math.round((a.size != null ? a.size : 0) - (b.size != null ? b.size : 0)) );
+                    sortedArray.sort( (b, a) -> Math.round((a.size != null ? a.size : 0) - (b.size != null ? b.size : 0)) );
             case AuthorCount:
                 if ( sort.ascending )
-                    return sortedArray.sort( (a, b) -> (a.authors != null ? a.authors.length : 0) - (b.authors != null ? b.authors.length : 0) );
+                    sortedArray.sort( (a, b) -> (a.authors != null ? a.authors.length : 0) - (b.authors != null ? b.authors.length : 0) );
                 else 
-                    return sortedArray.sort( (b, a) -> (a.authors != null ? a.authors.length : 0) - (b.authors != null ? b.authors.length : 0) );
+                    sortedArray.sort( (b, a) -> (a.authors != null ? a.authors.length : 0) - (b.authors != null ? b.authors.length : 0) );
             case RatingPercent:
                 if ( sort.ascending )
-                    return sortedArray.sort( (a, b) -> Math.round((a.ratingPercent != null ? a.ratingPercent : 0) - (b.ratingPercent != null ? b.ratingPercent : 0)) );
+                    sortedArray.sort( (a, b) -> Math.round((a.ratingPercent != null ? a.ratingPercent : 0) - (b.ratingPercent != null ? b.ratingPercent : 0)) );
                 else 
-                    return sortedArray.sort( (b, a) -> Math.round((a.ratingPercent != null ? a.ratingPercent : 0) - (b.ratingPercent != null ? b.ratingPercent : 0)) );
+                    sortedArray.sort( (b, a) -> Math.round((a.ratingPercent != null ? a.ratingPercent : 0) - (b.ratingPercent != null ? b.ratingPercent : 0)) );
         }
+        return sortedArray;
     }
 
     public static inline function sortAlphabetically(a:String, b:String):Int {
@@ -299,6 +329,7 @@ typedef SearchSort = {
 }
 
 enum SortFilter {
+    Relevance;
     Shuffle;
     Title;
     Year;
