@@ -197,6 +197,7 @@ class MapProfile extends VBox {
     private function onBackButton(e:MouseEvent) {
         hide();
         Database.refreshAllStates();
+        // MainView.instance.blurAllMapButtons();
     }
 
     @:bind(buttonQueue, MouseEvent.CLICK)

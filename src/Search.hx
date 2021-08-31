@@ -58,7 +58,8 @@ class Search extends VBox {
         disableAutoRefresh = false;
     }
 
-    private function resetSliders() {
+    @:bind(buttonResetFilters, MouseEvent.CLICK)
+    private function resetSliders(_) {
         disableAutoRefresh = true;
         resetSlider(yearSlider);
         resetSlider(authorCountSlider);
@@ -76,7 +77,7 @@ class Search extends VBox {
         MainView.moveBelowMenuBar(this);
 
         searchBar.text = searchQuery != null ? searchQuery : "";
-        resetSliders();
+        resetSliders(null);
 
         refreshSearch(null);
         disableAutoRefresh = false;

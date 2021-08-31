@@ -19,6 +19,7 @@
     <hbox width="100%" height="100%">
         <vbox width="256" height="100%">
             <vbox id="searchFilters" width="100%" height="320">
+                <button id="buttonResetFilters" text="Reset Filters" />
                 <label id="yearLabel" text="Year" />
                 <slider id="yearSlider" min="0" max="25" start="0" end="25" step="1" majorTicks="5" />
                 <spacer height="16" />

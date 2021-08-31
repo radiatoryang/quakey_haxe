@@ -54,7 +54,7 @@ class Downloader {
     }
 
     function updateStatusBar(newStatus:String = "") {
-        MainView.instance.menuBarStatus.text = newStatus;
+        Overlay.instance.menuBarStatus.text = newStatus;
     }
 
     static inline function getFullPath(localPath:String) {
@@ -91,7 +91,7 @@ class Downloader {
                 var mainPackage = Database.instance.db[mapIDToTryToInstall];
                 notifyMessage += " (required for " + mainPackage.title + ")";
             }
-            Notify.instance.addNotify(mapData.id, notifyMessage);
+            Overlay.notify(mapData.id, notifyMessage);
             downloadThreadPool.run( () -> { downloadMapAsync(mapData.id, mapData.md5sum, mapIDToTryToInstall); } );
         } else {
             trace( 'map ' + mapData.id + ' was already downloaded');
@@ -130,7 +130,7 @@ class Downloader {
         currentMapDownload.onBytes = function(bytes) { 
             var md5 = MD5.make(bytes).toHex();
             if ( md5 != expectedMd5 ) {
-                Notify.instance.addNotify(mapID, "error: file was corrupted for " + Database.instance.db[mapID].title );
+                Overlay.notify(mapID, "error: file was corrupted for " + Database.instance.db[mapID].title );
                 return;
             }
 
@@ -149,7 +149,7 @@ class Downloader {
     public function onDownloadMapSuccess(mapID:String, ?mapIDToTryToInstall:String, suppressNotification:Bool=false) {
         currentMapDownloadID = "";
         if (!suppressNotification)
-            Notify.instance.addNotify(mapID, "finished downloading " + Database.instance.db[mapID].title);
+            Overlay.notify(mapID, "finished downloading " + Database.instance.db[mapID].title);
         Database.instance.refreshState(mapID);
 
         queueMapInstall( Database.instance.db[mapIDToTryToInstall != null ? mapIDToTryToInstall : mapID], mapIDToTryToInstall == null );
@@ -157,7 +157,7 @@ class Downloader {
 
     public function onDownloadMapError(mapID:String, error:String) {
         currentMapDownloadID = "";
-        Notify.instance.addNotify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
+        Overlay.notify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
         Database.instance.refreshState(mapID);
     }
 
@@ -368,13 +368,13 @@ class Downloader {
 
     public function onInstallMapSuccess(mapID:String) {
         updateStatusBar();
-        Notify.instance.addNotify(mapID, "finished installing " + Database.instance.db[mapID].title);
+        Overlay.notify(mapID, "finished installing " + Database.instance.db[mapID].title);
         Database.instance.refreshState(mapID);
     }
 
     public function onInstallMapError(mapID:String, error:String) {
         updateStatusBar();
-        Notify.instance.addNotify(mapID, 'install error ($error) ' + Database.instance.db[mapID].title );
+        Overlay.notify(mapID, 'install error ($error) ' + Database.instance.db[mapID].title );
         Database.instance.refreshState(mapID);
     }
 
@@ -475,9 +475,9 @@ class Downloader {
         if ( isMapDownloaded(mapID) ) {
             try {
                 FileSystem.deleteFile( getMapDownloadPath(mapID) );
-                Notify.instance.addNotify(mapID, "deleted " + getMapDownloadPath(mapID) );
+                Overlay.notify(mapID, "deleted " + getMapDownloadPath(mapID) );
             } catch (e) {
-                Notify.instance.addNotify(mapID, "couldn't delete " + getMapDownloadPath(mapID) + " (" + e.message + ")" );
+                Overlay.notify(mapID, "couldn't delete " + getMapDownloadPath(mapID) + " (" + e.message + ")" );
             }
         } else {
             trace("tried to delete download " + mapID + ".zip but it was already deleted?");
@@ -489,9 +489,9 @@ class Downloader {
             try {
                 var dir = Dir.of( getModInstallFolder( Database.instance.db[mapID]) );
                 dir.delete(true);
-                Notify.instance.addNotify(mapID, "deleted " + getModInstallFolder( Database.instance.db[mapID]) );
+                Overlay.notify(mapID, "deleted " + getModInstallFolder( Database.instance.db[mapID]) );
             } catch (e) {
-                Notify.instance.addNotify(mapID, "couldn't delete " + getModInstallFolder( Database.instance.db[mapID]) + " (" + e.message + ")" );
+                Overlay.notify(mapID, "couldn't delete " + getModInstallFolder( Database.instance.db[mapID]) + " (" + e.message + ")" );
             }
         } else {
             trace("tried to delete install /" + getModInstallFolderName(Database.instance.db[mapID]) + "/ but it was already deleted?");

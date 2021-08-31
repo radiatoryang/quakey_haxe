@@ -169,8 +169,10 @@
     background-color: #544d3d;
 }
 
+/* used for MapProfile page */
 .gradient-left {
     background-image: "images/gradient_black_half.png";
+    padding: 16 32 16 32;
 }
 
 .scrollview {

@@ -188,7 +188,7 @@ class Main {
         mainView = new MainView();
         app.addComponent(mainView);
 
-        app.addComponent( Notify.init() );
+        app.addComponent( Overlay.init() );
         Downloader.init();
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 
@@ -199,11 +199,14 @@ class Main {
     }
 
     public static function moveToFrontButBeneathNotifications(frontComponent:Component) {
-        if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Notify.instance ) {
-            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
-        } else {
-            Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 1 );
-        }
+        Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
+        Screen.instance.setComponentIndex(Overlay.instance, Screen.instance.rootComponents.length - 1 );
+
+        // if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Overlay.instance ) {
+        //     Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
+        // } else {
+        //     Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 1 );
+        // }
     }
 
     public static function confirmExit() {

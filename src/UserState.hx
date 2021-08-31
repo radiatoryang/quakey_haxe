@@ -45,7 +45,7 @@ class UserState {
     public function dequeueMap(mapID:String) {
         if ( currentData.mapQueue.contains(mapID) ) {
             currentData.mapQueue.remove(mapID);
-            Notify.instance.addNotify(mapID, "REMOVED FROM QUEUE:\n" + Database.instance.db[mapID].title );
+            Overlay.notify(mapID, "REMOVED FROM QUEUE:\n" + Database.instance.db[mapID].title );
             MainView.instance.refreshQueue();
         }
         saveUser();
@@ -54,7 +54,7 @@ class UserState {
     public function markMap(mapID:String) {
         if ( !currentData.mapComplete.contains(mapID) )
             currentData.mapComplete.push(mapID);
-        Notify.instance.addNotify(mapID, "MARKED AS DONE:\n" + Database.instance.db[mapID].title );
+        Overlay.notify(mapID, "MARKED AS DONE:\n" + Database.instance.db[mapID].title );
         saveUser();
     }
 

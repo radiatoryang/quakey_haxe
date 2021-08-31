@@ -91,8 +91,8 @@ class Launcher {
                 args.push("+map " + startmap);
             }
 
-            if ( Notify.instance != null && !suppressNotify) {
-                Notify.instance.addNotify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
+            if ( !suppressNotify) {
+                Overlay.notify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
             } else {
                 trace("LAUNCHING: " + quakeExePath + " " + args.join(" "));
             }
@@ -115,8 +115,8 @@ class Launcher {
                 // }
             }
         } catch (e) {
-            if ( Notify.instance != null && !suppressNotify && mapData != null) {
-                Notify.instance.addNotify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
+            if ( !suppressNotify && mapData != null) {
+                Overlay.notify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
             } else {
                 trace("ERROR, can't launch " + quakeExePath + "because: " + e.message);
             }

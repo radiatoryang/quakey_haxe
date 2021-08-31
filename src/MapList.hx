@@ -74,6 +74,13 @@ class MapList extends VBox {
         //mapScroll.hscrollPos += mapScroll.hscrollPageSize;
     }
 
+    /** try to fix a weird bug where stale mouse click events / focus would open a previously clicked map profile page, even though we didn't click anywhere near it **/
+    // public function blurAllButtons() {
+    //     for(button in mapButtons) {
+    //         button.focus = false;
+    //     }
+    // }
+
     @:bind(mapScroll, haxe.ui.events.ScrollEvent.CHANGE)
     public function onScroll(e) {
         for(button in mapButtons) {

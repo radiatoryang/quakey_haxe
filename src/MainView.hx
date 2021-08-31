@@ -91,16 +91,12 @@ class MainView extends VBox {
 
         trace("queue is currently: " + UserState.instance.currentData.mapQueue.join(", "));
     }
-    
-    @:bind(menuButton, MouseEvent.CLICK)
-    private function openMenu(e:MouseEvent) {
-        Config.instance.show();
-    }
 
-    @:bind(searchButton, MouseEvent.CLICK)
-    private function openSearch(e) {
-        Search.instance.showSearch();
-    }
+        // public function blurAllMapButtons() {
+    //     for( list in mapLists) {
+    //         list.blurAllButtons();
+    //     }
+    // }
 
     @:bind(mainScroll, ScrollEvent.CHANGE)
     private function onScroll(e) {

@@ -1,7 +1,7 @@
 <vbox styleName="mapProfile" width="100%" height="100%">
     <vbox id="background-preview" width="100%" height="100%">
         <vbox id="background" width="100%" height="100%">
-            <vbox styleName="gradient-left" width="100%" height="100%" padding="48">
+            <vbox styleName="gradient-left" width="100%" height="100%">
                 <button text="<< BACK" id="backButton" />
                 <spacer height="16" />
 

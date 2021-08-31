@@ -58,7 +58,9 @@ class MapButton extends Button {
     }
 
     @:bind(this, MouseEvent.CLICK)
-    function onMapClick(e) {
+    function onMapClick(e:MouseEvent) {
+        trace("clicked a button for " + mapData.id);
+        e.cancel();
         MapProfile.openMapProfile( mapData );
     }    
 
