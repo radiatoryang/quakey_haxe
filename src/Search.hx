@@ -1,5 +1,6 @@
 package ;
 
+import haxe.Timer;
 import datetime.DateTime;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.events.UIEvent;
@@ -17,11 +18,12 @@ class Search extends VBox {
     static inline var YEAR_ZERO = 1996;
 
     var currentSearchObject:SearchGroup;
-
     var currentSearchResults:Array<MapEntry>;
     var currentSearchButtons:Array<MapButton> = new Array<MapButton>();
 
     var disableAutoRefresh = false;
+    var time = 0;
+    var nextRefreshTime = 0;
 
     public static function init() {
         instance = new Search();
@@ -31,6 +33,8 @@ class Search extends VBox {
     private function new() {
         super();
         disableAutoRefresh = true;
+        var timer = new Timer(100);
+        timer.run = slowUpdate;
     }
 
     private override function onInitialize() {
@@ -44,10 +48,16 @@ class Search extends VBox {
             if ( sortType == SortFilter.Shuffle ) {
                 searchSorting.dataSource.add( {text: Std.string(sortType), sortType: sortType, ascending: true });
             } else {
-                searchSorting.dataSource.add( {text: Std.string(sortType) + (sortType == SortFilter.Title ? " A-Z" : ", ascending"), sortType: sortType, ascending: true });
                 searchSorting.dataSource.add( {text: Std.string(sortType) + (sortType == SortFilter.Title ? " Z-A" : ", descending"), sortType: sortType, ascending: false });
+                searchSorting.dataSource.add( {text: Std.string(sortType) + (sortType == SortFilter.Title ? " A-Z" : ", ascending"), sortType: sortType, ascending: true });
             }
         }
+    }
+
+    @:bind(backButton, MouseEvent.CLICK)
+    private function onBackButton(e:MouseEvent) {
+        hide();
+        // Database.refreshAllStates();
     }
 
     override function onResized() {
@@ -62,11 +72,19 @@ class Search extends VBox {
     private function resetSliders(_) {
         disableAutoRefresh = true;
         resetSlider(yearSlider);
+        resetSlider(yearSlider);
+        resetSlider(authorCountSlider);
         resetSlider(authorCountSlider);
         resetSlider(ratingSlider);
+        resetSlider(ratingSlider);
+        resetSlider(sizeSlider);
         resetSlider(sizeSlider);
         disableAutoRefresh = false;
-        refreshSearch(null);
+        refreshSearch();
+    }
+
+    private inline function setAllCheckboxes(state:Bool) {
+        checkTitle.selected = checkAuthors.selected = checkTags.selected = checkDescription.selected = state;
     }
 
     public function showSearch(?searchQuery:String, ?textFilter:TextFilter) {
@@ -77,20 +95,33 @@ class Search extends VBox {
         MainView.moveBelowMenuBar(this);
 
         searchBar.text = searchQuery != null ? searchQuery : "";
+        if ( textFilter == null) {
+            setAllCheckboxes(true);
+        } else {
+            setAllCheckboxes(false);
+            switch (textFilter) {
+                case Title: checkTitle.selected = true;
+                case Author: checkAuthors.selected = true;
+                case Tags: checkTags.selected = true;
+                case Description: checkDescription.selected = true;
+            }
+        }
         resetSliders(null);
-
-        refreshSearch(null);
         disableAutoRefresh = false;
+
+        refreshSearch();
+    }
+
+    private function slowUpdate() {
+        time++;
+
+        if ( time > nextRefreshTime ) {
+            nextRefreshTime = time + 999999;
+            refreshSearch();
+        }
     }
 
     @:bind(searchSorting, UIEvent.CHANGE)
-    function onChangeSort(e) {
-        if ( disableAutoRefresh )
-            return;
-
-        refreshSearch(null);
-    }
-
     @:bind(searchBar, UIEvent.PROPERTY_CHANGE)
     @:bind(checkTitle, MouseEvent.CLICK)
     @:bind(checkTags, MouseEvent.CLICK)
@@ -100,12 +131,14 @@ class Search extends VBox {
     @:bind(sizeSlider, UIEvent.CHANGE)
     @:bind(ratingSlider, UIEvent.CHANGE)
     @:bind(authorCountSlider, UIEvent.CHANGE)
-    private function refreshSearch(e) {
+    private function tryAutoRefresh(e) {
         if ( disableAutoRefresh )
             return;
+        nextRefreshTime = time + 1;
+    }
 
-        trace("refreshing search");
 
+    private function refreshSearch() {
         // generate all the data we need and update UI
         currentSearchObject = generateSearchObject();
         currentSearchResults = getSearchResults(currentSearchObject);
@@ -197,11 +230,11 @@ class Search extends VBox {
         for( filter in textFilters) {
             switch (filter.filterType) {
                 case Title:
-                    if (mapEntry.title != null && (filter.query == null || mapEntry.title.toLowerCase().contains(filter.query)) ) {
+                    if (mapEntry.title != null && (filter.query == null || mapEntry.title.toLowerCase().contains(filter.query.toLowerCase())) ) {
                         return true;
                     }
                 case Author:
-                    if (mapEntry.authors != null && (filter.query == null || mapEntry.authors.join(" ").toLowerCase().contains(filter.query)) ) {
+                    if (mapEntry.authors != null && (filter.query == null || mapEntry.authors.join(" ").toLowerCase().contains(filter.query.toLowerCase())) ) {
                         return true;
                     }
                 case Tags:
@@ -209,7 +242,7 @@ class Search extends VBox {
                         return true;
                     }
                 case Description:
-                    if (mapEntry.description != null && (filter.query == null || mapEntry.description.toLowerCase().contains(filter.query)) ) {
+                    if (mapEntry.description != null && (filter.query == null || mapEntry.description.toLowerCase().contains(filter.query.toLowerCase())) ) {
                         return true;
                     }
             }

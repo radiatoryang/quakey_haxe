@@ -51,6 +51,8 @@ class MapProfile extends VBox {
         for(author in mapData.authors) {
             var newButton = new Button();
             newButton.text = author;
+            newButton.tooltip = "search for more by " + author;
+            newButton.onClick = function(e) { Search.instance.showSearch(author, Search.TextFilter.Author); };
             authorContainer.addComponent(newButton);
         }
 
@@ -120,6 +122,8 @@ class MapProfile extends VBox {
             for(tag in mapData.tags) {
                 var newButton = new Button();
                 newButton.text = tag;
+                newButton.tooltip = "search for all tagged with " + tag;
+                newButton.onClick = function(e) { Search.instance.showSearch(tag, Search.TextFilter.Tags); };
                 tagsContainer.addComponent(newButton);
             }
         } else {
@@ -197,7 +201,7 @@ class MapProfile extends VBox {
     private function onBackButton(e:MouseEvent) {
         hide();
         Database.refreshAllStates();
-        // MainView.instance.blurAllMapButtons();
+        // to try to save some memory, uncache the background image
     }
 
     @:bind(buttonQueue, MouseEvent.CLICK)

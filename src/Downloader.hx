@@ -557,6 +557,8 @@ class Downloader {
 
         cacheImage(filepath, data.toImage() );
 
+        localLoader.cleanCache();
+
         return filepath;
     }
 
@@ -565,6 +567,8 @@ class Downloader {
         @:privateAccess ToolkitAssets.instance._imageCache.set(filepath, imageData);
         TileCache.set(filepath, image.toTile() );
     }
+
+    // public function uncacheImage(filepath:String)
 
     public static function getMapListFromDisk(mapData:MapEntry):Array<String> {
         if ( Downloader.isModInstalled(mapData.id) == false) {

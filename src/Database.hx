@@ -61,7 +61,7 @@ class Database {
             for(authorString in file.elementsNamed("author")) {
                 var lotsOfAuthors = authorString.firstChild().nodeValue.replace("&amp;", "&").split(",");
                 for(stillMaybeMultipleAuthor in lotsOfAuthors) {
-                    var multipleAuthors = stillMaybeMultipleAuthor.split('&');
+                    var multipleAuthors = stillMaybeMultipleAuthor.split('&'); // TODO: convert to regex
                     for (authorName in multipleAuthors) {
                         authors.push( authorName.trim() );
                     }

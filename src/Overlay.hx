@@ -29,9 +29,7 @@ class Overlay extends HBox {
 
     @:bind(homeButton, MouseEvent.CLICK)
     public function openHome(e:MouseEvent) {
-        // blurAllMapButtons();
-        // show();
-        Main.moveToFrontButBeneathNotifications( MainView.instance );
+        MainView.instance.showMainView();
     }
     
     @:bind(configButton, MouseEvent.CLICK)

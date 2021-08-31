@@ -1,9 +1,11 @@
 <vbox id="search" width="100%" height="672">
     <style source="styles/quakey.css" />
     <hbox width="100%" height="48" continuous="true">
+        <button text="<< BACK" id="backButton" />
+        <spacer width="16" />
         <image resource="images/icon_search.png" width="48" height="48" opacity="0.69" />
         <spacer width="4" />
-        <textfield id="searchBar" width="480" height="100%" style="font-size: 32;" />
+        <textfield id="searchBar" width="440" height="100%" style="font-size: 32;" />
         <spacer width="16" />
         <hbox>
             <checkbox id="checkTitle" text="Title" selected="true" />

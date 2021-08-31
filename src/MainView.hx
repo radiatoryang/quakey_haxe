@@ -71,6 +71,11 @@ class MainView extends VBox {
         mapLists.push(listSewer);
     }
 
+    public function showMainView() {
+        Main.moveToFrontButBeneathNotifications( this );
+        moveBelowMenuBar(this);
+    }
+
     // public function refreshAllMapButtons() {
     //     for( list in mapLists) {
     //         list.refreshMapButtons();
