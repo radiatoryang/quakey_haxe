@@ -41,6 +41,7 @@ class Database {
             var md5 = "";
             var authors = new Array<String>();
             var description = id;
+            var descriptionLinks = new Array<String>();
             var date:Date = null;
             var size = -1.0;
             var tags = new Array<String>();
@@ -70,6 +71,23 @@ class Database {
 
             for (descString in file.elementsNamed("description")) {
                 description = descString.firstChild().nodeValue.trim().replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n");
+                // extract links to other Quaddicted pages
+                if ( description.contains("href") ) {
+                    var descSplit = description.split('href="');
+                    for (i in 1...descSplit.length) {
+                        var link = descSplit[i].split('"')[0];
+                        if ( link.endsWith(".html")) { // must parse "ad_v1_70final.html" and "/reviews/nehahra.html" as well as "http://www.quaddicted.com/reviews/quoth.html"
+                            if ( link.contains("reviews/") || (!link.startsWith("http") && !link.startsWith("www")) ) {
+                                var linkSplit = link.split("/"); 
+                                var linkID = linkSplit[linkSplit.length-1].substring( 0, linkSplit[linkSplit.length-1].length - ".html".length );
+                                descriptionLinks.push( linkID );
+                            } 
+                        }
+                        // trace("found href=" + descSplit[i] " ... parsed into: " +  );
+                    }
+                }
+
+                // now strip all HTML
                 description = htmlStripRegex.replace(description, "");
             }
 
@@ -119,7 +137,8 @@ class Database {
                 rating: rating,
                 ratingPercent: ratingPercent,
                 tags: tags,
-                techinfo: techInfo
+                techinfo: techInfo,
+                links: descriptionLinks
             } );
         }
 

@@ -134,6 +134,19 @@ class MapProfile extends VBox {
         description.text = mapData.description;
         description.filter = textFilter;
 
+        if ( mapData.links != null ) {
+            for(link in mapData.links) {
+                if ( Database.instance.db.exists(link) ) {
+                    var linkData = Database.instance.db[link];
+                    var newButton = new Button();
+                    newButton.text = linkData.title;
+                    newButton.tooltip = "click to view linked item " + link + "\n" + linkData.title;
+                    newButton.onClick = function(e) { openMapProfile(linkData); };
+                    description.parentComponent.addComponent(newButton);
+                }
+            }
+        }
+
         Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoadedPreview );
         Downloader.instance.getImageAsync(mapData.id + ".jpg", onImageLoaded );
 
