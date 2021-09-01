@@ -64,14 +64,13 @@ class MapList extends VBox {
     @:bind(buttonPrevious, MouseEvent.CLICK)
     private function onPrevious(e:MouseEvent) {
         mapScroll.hscrollPos -= mapScroll.width;
-        onScroll(null);
+        loadMapButtons(-mapScroll.width); // hack... when we update scrollbar instantly, it's too fast for mapButtons to realize they've changed pos, so we manually add offset
     }
 
     @:bind(buttonNext, MouseEvent.CLICK)
     private function onNext(e:MouseEvent) {
         mapScroll.hscrollPos += mapScroll.width;
-        onScroll(null);
-        //mapScroll.hscrollPos += mapScroll.hscrollPageSize;
+        loadMapButtons(mapScroll.width); // hack... when we update scrollbar instantly, it's too fast for mapButtons to realize they've changed
     }
 
     /** try to fix a weird bug where stale mouse click events / focus would open a previously clicked map profile page, even though we didn't click anywhere near it **/
@@ -83,8 +82,12 @@ class MapList extends VBox {
 
     @:bind(mapScroll, haxe.ui.events.ScrollEvent.CHANGE)
     public function onScroll(e) {
+        loadMapButtons();
+    }
+
+    function loadMapButtons(extraX:Float=0, extraY:Float=0 ) {
         for(button in mapButtons) {
-            if ( button.screenX > 0 && button.screenX < Screen.instance.width && button.screenY > 0 && button.screenY < Screen.instance.height ) {
+            if ( button.screenX > 0 + extraX && button.screenX < Screen.instance.width + extraX && button.screenY > 0 + extraY && button.screenY < Screen.instance.height + extraY ) {
                 button.onVisibleInScreenBounds();
             }
         }

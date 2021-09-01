@@ -199,9 +199,8 @@ class MapProfile extends VBox {
     
     @:bind(backButton, MouseEvent.CLICK)
     private function onBackButton(e:MouseEvent) {
-        hide();
         Database.refreshAllStates();
-        // to try to save some memory, uncache the background image
+        disposeProfile(this);
     }
 
     @:bind(buttonQueue, MouseEvent.CLICK)
@@ -267,5 +266,21 @@ class MapProfile extends VBox {
 
         // temp for testing
         // Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
+    }
+
+    public static function clearProfileCache() {
+        for( profile in cache) {
+            disposeProfile(profile);
+        }
+    }
+
+    public static function disposeProfile(profile:MapProfile) {
+        profile.hide();
+        if ( MapProfile.cache.exists(profile.mapData.id) ) {
+            MapProfile.cache.remove(profile.mapData.id);
+        }
+        Downloader.instance.disposeImage(profile.mapData.id + ".jpg");
+        profile.destroyComponent();
+        profile.dispose();
     }
 }

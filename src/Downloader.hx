@@ -4,7 +4,6 @@ import haxe.Json;
 import haxe.Timer;
 import haxe.Http;
 import haxe.io.Path;
-import haxe.display.Display.Package;
 import haxe.zip.Entry;
 import haxe.io.BytesInput;
 import Database.MapEntry;
@@ -513,6 +512,11 @@ class Downloader {
         threadPool.run( () -> { downloadImageAsync(filename, callback); } );
     }
 
+    public function disposeImage(filename:String) {
+        var localPath = Path.addTrailingSlash(Main.CACHE_PATH) + filename;
+        uncacheImage(localPath);
+    }
+
     function downloadImageAsync(filename:String, callback:String -> Void) {
         var localPath = Path.addTrailingSlash(Main.CACHE_PATH) + filename;
         var fullPath = getFullPath(localPath);
@@ -568,7 +572,17 @@ class Downloader {
         TileCache.set(filepath, image.toTile() );
     }
 
-    // public function uncacheImage(filepath:String)
+    function uncacheImage(filepath:String) {
+        @:privateAccess if (ToolkitAssets.instance._imageCache.exists(filepath) ) {
+            ToolkitAssets.instance._imageCache.get(filepath).data.dispose();
+            ToolkitAssets.instance._imageCache.remove(filepath);
+        }
+        @:privateAccess if ( TileCache.exists(filepath) ) {
+            TileCache.get(filepath).dispose();
+            TileCache._cache.remove(filepath);
+        }
+        
+    }
 
     public static function getMapListFromDisk(mapData:MapEntry):Array<String> {
         if ( Downloader.isModInstalled(mapData.id) == false) {

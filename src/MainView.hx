@@ -74,6 +74,7 @@ class MainView extends VBox {
     public function showMainView() {
         Main.moveToFrontButBeneathNotifications( this );
         moveBelowMenuBar(this);
+        MapProfile.clearProfileCache();
     }
 
     // public function refreshAllMapButtons() {
