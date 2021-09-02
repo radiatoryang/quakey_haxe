@@ -1,5 +1,7 @@
 <hbox id="menuBar">
-    <spacer width="16" />
+    <spacer width="8" />
+    <image resource="images/icon_quakey.png" width="48" height="48" opacity="0.69" />
+    <spacer width="8" />
     <label id="menuBarStatus" text="Welcome to QUAKEY" />
     <spacer width="100%" />
     <button id="homeButton" icon="images/icon_home.png" tooltip="Main view" />
