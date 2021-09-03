@@ -1,5 +1,6 @@
 <vbox styleName="description" width="500">
-    <!-- <grid width="100%"> -->
+    <grid width="100%">
         <textfield id="rename" width="100%" />
-    <!-- </grid> -->
+        <button id="resetButton" text="Reset to Default" />
+    </grid>
 </vbox>

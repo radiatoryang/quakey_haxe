@@ -1,5 +1,6 @@
 package ;
 
+import hx.concurrent.executor.Executor.TaskFutureBase;
 import Database.MapState;
 import datetime.utils.DateTimeMonthUtils;
 import haxe.ui.core.Screen;
@@ -19,6 +20,8 @@ import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
 
 import datetime.DateTime;
+
+using StringTools;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/map-profile.xml"))
 class MapProfile extends VBox {
@@ -253,6 +256,35 @@ class MapProfile extends VBox {
         Downloader.instance.tryDeleteAll( mapData.id );
         Downloader.instance.queueMapDownload(mapData);
         forceRefresh();
+    }
+
+    @:bind(buttonReinstall, MouseEvent.CLICK)
+    private function onReinstallButton(e:MouseEvent) {
+        var changeFolderDialog = new TextDialog();
+        changeFolderDialog.title = "Re-install mod under folder name...";
+        changeFolderDialog.defaultValue = Downloader.getModInstallFolderNameDefault(mapData);
+        changeFolderDialog.onDialogClosed = function(e:haxe.ui.containers.dialogs.Dialog.DialogEvent) {
+            if ( e.button == haxe.ui.containers.dialogs.Dialog.DialogButton.SAVE ) {
+                var dialogValue = changeFolderDialog.getDialogValue();
+                if ( dialogValue != null && dialogValue.length > 0) {
+                    // delete old install, if it used the default folder name
+                    if ( Downloader.getModInstallFolderName(mapData) == Downloader.getModInstallFolderNameDefault(mapData) ) {
+                        Downloader.instance.tryDeleteInstall(mapData.id);
+                    }
+                    // commit new override settings and queue install
+                    if ( dialogValue == Downloader.getModInstallFolderNameDefault(mapData) ) {
+                        UserState.instance.clearOverrideInstall(mapData.id);
+                    } else {
+                        UserState.instance.setOverrideInstall(mapData.id, dialogValue);
+                    }
+                    Downloader.instance.queueMapInstall(mapData, true, true);
+                } else {
+                    UserState.instance.clearOverrideInstall(mapData.id);
+                }
+            }
+        };
+        changeFolderDialog.rename.text = Downloader.getModInstallFolderName(mapData);
+        changeFolderDialog.showDialog();
     }
 
     @:bind(buttonBrowse, MouseEvent.CLICK)

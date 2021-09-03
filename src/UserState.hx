@@ -73,6 +73,18 @@ class UserState {
 
     public function setActivity(mapID:String, activity:ActivityType) {
         currentData.mapActivity.set(mapID, {timestamp: DateTime.now().toString(), activity: activity });
+        saveUser();
+    }
+
+    public function setOverrideInstall(mapID:String, overrideName:String) {
+        currentData.overrideInstallFolder.set(mapID, overrideName);
+        saveUser();
+    }
+
+    public function clearOverrideInstall(mapID:String) {
+        if ( currentData.overrideInstallFolder.exists(mapID) )
+            currentData.overrideInstallFolder.remove(mapID);
+        saveUser();
     }
 
     public static function getUsers():Array<String> {

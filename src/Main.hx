@@ -181,7 +181,7 @@ class Main {
         Database.init();
 
         // temp until the user select screen goes up
-        if ( UserState.getUsers() != null ) {
+        if ( UserState.getUsers() != null && UserState.getUsers().length > 0 ) {
             UserState.instance.currentData = UserState.loadUser( UserState.getUsers()[0] );
         }
 

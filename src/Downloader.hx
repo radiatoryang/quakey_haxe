@@ -195,10 +195,16 @@ class Downloader {
     public static function getModInstallFolderName(mapData:MapEntry) {
         // we repackage all quakey mods with "quakey_" prefix to avoid breaking Quake installations or anything
         // the process for deciding what folder to put the mapData in:
-        // 1. TODO: manual user override for where to put it
+        // 1. manual user override for where to put it
         // 2. use mapID as suffix
-        // 3. or for max compatibility you can use getModInstallFolderSuffix to know what mod it expected to use
 
+        if ( UserState.instance.currentData.overrideInstallFolder.exists(mapData.id))
+            return UserState.instance.currentData.overrideInstallFolder[mapData.id];
+        else
+            return getModInstallFolderNameDefault(mapData);
+    }
+
+    public static function getModInstallFolderNameDefault(mapData:MapEntry) {
         return "quakey_" + mapData.id.replace(".", "-").replace(" ", "");
     }
 
@@ -206,7 +212,7 @@ class Downloader {
         // process for figuring out the desired mod folder
         // 1. look for any "-game" command line ... this is good for most modern Quake packages (what most people will play)
         // 2. then check the zipbasedir .. this is good for most old map packs (1000+ items) that all use "id1/maps/"
-        // 3. TODO: if both of those fail, then do this the hard way -- scan the .zip and look for root folder of any .dat or .pak or .bsp
+        // 3. if both of those fail, then do this the hard way -- scan the .zip and look for root folder of any .dat or .pak or .bsp
 
         // this process must be deterministic and reliable
 

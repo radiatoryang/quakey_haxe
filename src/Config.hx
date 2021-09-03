@@ -18,15 +18,6 @@ import sys.io.Process;
 
 using StringTools;
 
-@:build(haxe.ui.macros.ComponentMacros.build("assets/config-name-dialog.xml"))
-class ConfigNameDialog extends Dialog {
-    public function new() {
-        super();
-        title = "Rename Config";
-        buttons = DialogButton.CANCEL | DialogButton.SAVE;
-    }
-}
-
 @:build(haxe.ui.ComponentBuilder.build("assets/config-menu.xml"))
 class Config extends VBox {
     public static var instance:Config;
@@ -146,10 +137,12 @@ class Config extends VBox {
 
     @:bind( buttonRenameConfig, MouseEvent.CLICK)
     function renameConfig(e) {
-        var renameDialog = new ConfigNameDialog();
+        var renameDialog = new TextDialog();
+        renameDialog.title = "Rename Config";
+        renameDialog.defaultValue = "My Config";
         renameDialog.onDialogClosed = function(e:DialogEvent) {
             if ( e.button == DialogButton.SAVE ) {
-                currentConfig.name = cast(e.target, ConfigNameDialog).rename.text.replace('\"', ' ').replace('"', ' ').replace('\n', ' ').replace('\r', ' ').replace('\\', ' '); // sanitize
+                currentConfig.name = renameDialog.getDialogValue();
                 configDropdown.text = currentConfig.name;
                 configDropdown.selectedItem.text = currentConfig.name;
                 configs[configDropdown.selectedIndex].name = currentConfig.name; // idk why this is necessary? once I added file i/o it became a mess
