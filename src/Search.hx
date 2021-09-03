@@ -141,8 +141,8 @@ class Search extends VBox {
     private function refreshSearch() {
         // generate all the data we need and update UI
         currentSearchObject = generateSearchObject();
-        currentSearchResults = getSearchResults(currentSearchObject);
-        currentSearchResults = getSortedMaps(currentSearchResults, currentSearchObject.sorting);
+        var earlySearchResultsWithScores = getSearchResultsWithScores(currentSearchObject);
+        currentSearchResults = getSortedMaps(earlySearchResultsWithScores, currentSearchObject.sorting);
 
         searchResultCount.text = currentSearchResults.length + " results found";
         yearLabel.text = "Year: " + Math.round(YEAR_ZERO + yearSlider.start) + " - " + Math.round(YEAR_ZERO + yearSlider.end);
@@ -164,7 +164,7 @@ class Search extends VBox {
             newButton.mapData = result;
             newButton.loadImageOnInit = true;
             searchContents.addComponent(newButton);
-            if ( index > 20 ) // debug
+            if ( index >= 32 ) // for now, limit search result count?
                 break;
         }
 
@@ -173,14 +173,19 @@ class Search extends VBox {
     /** based on all the current Search UI settings, generate a search query object group **/
     public function generateSearchObject():SearchGroup {
         var textFilters = new Array<SearchText>();
-        if ( checkTitle.selected )
-            textFilters.push( { query: searchBar.text, filterType:TextFilter.Title } );
-        if ( checkTags.selected )
-            textFilters.push( { query: searchBar.text, filterType:TextFilter.Tags } );
-        if ( checkAuthors.selected )
-            textFilters.push( { query: searchBar.text, filterType:TextFilter.Author } );
-        if ( checkDescription.selected )
-            textFilters.push( { query: searchBar.text, filterType:TextFilter.Description } );
+        if ( searchBar != null && searchBar.text != null && searchBar.text.replace(" ", "").length > 0 ) {
+            var searchTerms = searchBar.text.replace("  ", " ").split(" ");
+            for(term in searchTerms) {
+                if ( checkTitle.selected )
+                    textFilters.push( { query: term, filterType:TextFilter.Title } );
+                if ( checkTags.selected )
+                    textFilters.push( { query: term, filterType:TextFilter.Tags } );
+                if ( checkAuthors.selected )
+                    textFilters.push( { query: term, filterType:TextFilter.Author } );
+                if ( checkDescription.selected )
+                    textFilters.push( { query: term, filterType:TextFilter.Description } );
+            }
+        }
 
         var numberFilters = new Array<SearchNumber>();
         if ( isSliderUsed(yearSlider) )
@@ -214,40 +219,47 @@ class Search extends VBox {
     /** main search function; static because user-generated playlists in MainView will also use this search to populate themselves, this isn't just for search page!
         also blocking / happens in a single frame, hopefully it's fast enough where we don't need to thread it
      **/
-    public static function getSearchResults(searchGroup:SearchGroup) {  
+    public static function getSearchResultsWithScores(searchGroup:SearchGroup) {  
         var allMaps = Lambda.array(Database.instance.db);
-        var results = new Array<Database.MapEntry>();
+        var resultsWithScore = new Map<Database.MapEntry, Int>();
         
         for( mapEntry in allMaps ) {
-            if ( doesMapMatchAny(mapEntry, searchGroup.textFilters) && doesMapMatchAll(mapEntry, searchGroup.numberFilters) )
-                results.push(mapEntry);
+            var score = doesMapMatchAny(mapEntry, searchGroup.textFilters);
+            if ( score > 0 && doesMapMatchAll(mapEntry, searchGroup.numberFilters) )
+                resultsWithScore.set(mapEntry, score * 10 + Math.round(mapEntry.rating * 25));
         }
 
-        return results;
+        return resultsWithScore;
     }
 
-    private static function doesMapMatchAny(mapEntry:Database.MapEntry, textFilters:Array<SearchText>):Bool {
+    private static function doesMapMatchAny(mapEntry:Database.MapEntry, textFilters:Array<SearchText>):Int {
+        var score = 0;
+        var search = "";
         for( filter in textFilters) {
+            search = filter.query.trim().toLowerCase();
+            if ( search.length == 0 )
+                continue;
+
             switch (filter.filterType) {
                 case Title:
-                    if (mapEntry.title != null && (filter.query == null || mapEntry.title.toLowerCase().contains(filter.query.toLowerCase())) ) {
-                        return true;
+                    if (mapEntry.title != null && mapEntry.title.toLowerCase().contains(search) ) {
+                        score += 2;
                     }
                 case Author:
-                    if (mapEntry.authors != null && (filter.query == null || mapEntry.authors.join(" ").toLowerCase().contains(filter.query.toLowerCase())) ) {
-                        return true;
+                    if (mapEntry.authors != null && mapEntry.authors.join(" ").toLowerCase().contains(search) ) {
+                        score += 3;
                     }
                 case Tags:
-                    if (mapEntry.tags != null && (filter.query == null || mapEntry.tags.join(" ").contains(filter.query)) ) {
-                        return true;
+                    if (mapEntry.tags != null && mapEntry.tags.join(" ").contains(search) ) {
+                        score += 3;
                     }
                 case Description:
-                    if (mapEntry.description != null && (filter.query == null || mapEntry.description.toLowerCase().contains(filter.query.toLowerCase())) ) {
-                        return true;
+                    if (mapEntry.description != null && mapEntry.description.toLowerCase().contains(search) ) {
+                        score += 1;
                     }
             }
         }
-        return false;
+        return score;
     }
 
     private static function doesMapMatchAll(mapEntry:Database.MapEntry, numberFilters:Array<SearchNumber>):Bool {
@@ -274,11 +286,14 @@ class Search extends VBox {
         return true;
     }
 
-    public static function getSortedMaps(mapArray:Array<Database.MapEntry>, sort:SearchSort) {
-        var sortedArray = mapArray.copy();
+    public static function getSortedMaps(mapArray:Map<Database.MapEntry, Int>, sort:SearchSort) {
+        var sortedArray = [for(key in mapArray.keys()) key];
         switch (sort.sortType) {
             case Relevance:
-                hxd.Rand.create().shuffle(sortedArray); // TODO: calculate relevance score
+                if ( sort.ascending )
+                    sortedArray.sort( (a,b) -> mapArray[a] - mapArray[b] );
+                else 
+                    sortedArray.sort( (b,a) -> mapArray[a] - mapArray[b] );
             case Shuffle:
                 hxd.Rand.create().shuffle(sortedArray);
             case Title:
