@@ -81,6 +81,7 @@ class Launcher {
             }
 
             if (mapData != null) {
+                UserState.instance.setActivity(mapData.id, UserState.ActivityType.Played);
                 if ( !isQuakeEX ) 
                     args.push( "-game " + Downloader.getModInstallFolderName(mapData) );
                 else

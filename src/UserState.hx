@@ -1,5 +1,6 @@
 package ;
 
+import datetime.DateTime;
 import haxe.io.Path;
 import sys.FileSystem;
 import haxe.Json;
@@ -20,7 +21,10 @@ class UserState {
         currentData = {
             username: DEFAULT_USERNAME,
             mapQueue: new Array<String>(),
-            mapComplete: new Array<String>()
+            mapComplete: new Array<String>(),
+            mapActivity: new Map<String, UserActivity>(),
+            overrideLaunchArguments: new Map<String, String>(),
+            overrideInstallFolder: new Map<String, String>()
         }
     }
 
@@ -38,6 +42,7 @@ class UserState {
             Downloader.instance.queueMapDownload( Database.instance.db[mapID] );
             // Notify.instance.addNotify(mapID, "QUEUED FOR DOWNLOAD AND INSTALL:\n" + Database.instance.db[mapID].title );
             MainView.instance.refreshQueue();
+            setActivity(mapID, ActivityType.Queued);
         }
         saveUser();
     }
@@ -64,6 +69,10 @@ class UserState {
 
     public function isMapCompleted(mapID:String):Bool {
         return currentData.mapComplete.contains(mapID);
+    }
+
+    public function setActivity(mapID:String, activity:ActivityType) {
+        currentData.mapActivity.set(mapID, {timestamp: DateTime.now().toString(), activity: activity });
     }
 
     public static function getUsers():Array<String> {
@@ -104,4 +113,24 @@ typedef UserData = {
     var username: String;
     var mapQueue: Array<String>;
     var mapComplete: Array<String>;
+
+    /** just a reminder for what the user last did, but interally we don't actually expect it to be accurate or reliable... key = map ID **/
+    var mapActivity: Map<String, UserActivity>;
+
+    /** overrides for what mod folder name to use... key = map ID, value = mod folder name **/
+    var overrideInstallFolder: Map<String, String>;
+
+    /** overrides for what launch arguments to use... key = map ID, value = full launch argument string **/
+    var overrideLaunchArguments: Map<String, String>;
+}
+
+typedef UserActivity = {
+    var timestamp: String; // DateTime string?
+    var activity: ActivityType;
+}
+
+enum ActivityType {
+    Queued;
+    Installed;
+    Played;
 }

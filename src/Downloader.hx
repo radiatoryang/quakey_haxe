@@ -365,6 +365,7 @@ class Downloader {
         updateStatusBar();
         Overlay.notify(mapID, "INSTALL COMPLETE: " + Database.instance.db[mapID].title);
         Database.instance.refreshState(mapID);
+        UserState.instance.setActivity(mapID, UserState.ActivityType.Installed);
     }
 
     public function onInstallMapError(mapID:String, error:String) {

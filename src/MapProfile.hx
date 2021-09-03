@@ -189,6 +189,13 @@ class MapProfile extends VBox {
                 buttonQueue.disabled = false;
                 toggleFileButtons(true);
         }
+        if (UserState.instance.currentData.mapActivity.exists(mapData.id)) {
+            activity.show();
+            var activ = UserState.instance.currentData.mapActivity[mapData.id];
+            activity.text = "last " + Std.string(activ.activity).toLowerCase() + " " + Database.getRelativeTime( DateTime.fromString(activ.timestamp) );
+        } else {
+            activity.hide();
+        }
     }
 
     inline function toggleFileButtons(state:Bool) {

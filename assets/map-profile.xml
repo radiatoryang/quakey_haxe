@@ -16,9 +16,9 @@
                     <image resource="images/icon_clock.png" width="24" height="24" opacity="0.69" />
                     <label text="Map Date" id="date" />
                     <spacer width="24" />
-                    <image resource="images/icon_storage.png" width="24" height="24" opacity="0.69" />
+                    <image resource="images/icon_download.png" width="24" height="24" opacity="0.69" />
                     <spacer width="4" />
-                    <label text="File Size" id="sizeLabel" />
+                    <label text="Download Size" id="sizeLabel" />
                     <spacer width="24" />
                     <image resource="images/icon_trophy.png" width="24" height="24" opacity="0.69" />
                     <spacer width="4" />
@@ -37,6 +37,7 @@
                     <spacer width="31%" />
                     <vbox width="256px" height="100%">
                         <spacer height="16" />
+                        <label text="Activity" id="activity" />
                         <button id="buttonQueue" icon="images/icon_queue.png" styleName="biggerButton" text="QUEUE" />
                         <button id="buttonMark" icon="images/icon_checkbox.png" styleName="bigButton" text="MARK DONE AND HIDE" tooltip="hidden mods won't be recommended in playlists or searches\n (you can unhide it in your Profile settings)"/>
                         <hbox id="menuManage" width="100%">
