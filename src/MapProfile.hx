@@ -45,6 +45,7 @@ class MapProfile extends VBox {
 
         var componentTitle = findComponent("title", Label);
         componentTitle.text = mapData.title;
+        componentTitle.tooltip = "map ID: " + mapData.id;
         componentTitle.filter = textFilter;
 
         var authorContainer = findComponent("authors", HBox);
@@ -191,7 +192,8 @@ class MapProfile extends VBox {
     }
 
     inline function toggleFileButtons(state:Bool) {
-        buttonDelete.hidden = buttonRedownload.hidden = buttonBrowse.hidden = !state;
+        menuManage.hidden = !state;
+        // buttonDelete.hidden = buttonRedownload.hidden = buttonBrowse.hidden = !state;
     }
 
     public function onImageLoadedPreview(filepath:String) {

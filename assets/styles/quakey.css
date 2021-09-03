@@ -144,13 +144,13 @@
 .bigButton {
     font-size: 16px;
     padding: 8px;
-    width: 320px;
+    width: 100%;
 }
 
 .biggerButton {
     font-size: 28px;
     padding: 12px;
-    width: 320px;
+    width: 100%;
 }
 
 .mapButton {
@@ -172,7 +172,7 @@
 /* used for MapProfile page */
 .gradient-left {
     background-image: "images/gradient_black_half.png";
-    padding: 16 32 16 32;
+    padding: 16 48 16 32;
 }
 
 .scrollview {

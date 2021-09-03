@@ -74,10 +74,8 @@ class Downloader {
             for( dependencyID in mapData.techinfo.requirements ) {
                 if ( Database.instance.db.exists(dependencyID) ) {
                     var depend = Database.instance.db[dependencyID];
-                    if ( mapIDToTryToInstall == null) {
-                        mapIDToTryToInstall = mapData.id; // don't try to install dependencies as standalones
-                    }
-                    queueMapDownload( depend, mapIDToTryToInstall );
+                    // don't try to install dependencies as standalones
+                    queueMapDownload( depend, mapIDToTryToInstall != null ? mapIDToTryToInstall : mapData.id ); 
                 } else {
                     trace( 'ERROR! cannot find requirement with ID:$dependencyID -- this is a problem in the XML, please tell Quaddicted to fix this!');
                 }
@@ -146,7 +144,7 @@ class Downloader {
     }
 
     public function onDownloadMapSuccess(mapID:String, ?mapIDToTryToInstall:String, suppressNotification:Bool=false) {
-        currentMapDownloadID = "";
+        // currentMapDownloadID = "";
         if (!suppressNotification)
             Overlay.notify(mapID, "finished downloading " + Database.instance.db[mapID].title);
         Database.instance.refreshState(mapID);
@@ -155,7 +153,7 @@ class Downloader {
     }
 
     public function onDownloadMapError(mapID:String, error:String) {
-        currentMapDownloadID = "";
+        // currentMapDownloadID = "";
         Overlay.notify(mapID, 'network error $error downloading ' + Database.instance.db[mapID].title );
         Database.instance.refreshState(mapID);
     }
@@ -292,11 +290,9 @@ class Downloader {
     }
 
     public function queueMapInstall(mapData:MapEntry, canQueueDownload:Bool=false, installEvenIfAlreadyInstalled:Bool=false) {
-        if ( !installEvenIfAlreadyInstalled ) {
-            if ( isModInstalled(mapData.id) ) {
-                trace(mapData.id + " was already installed!");
-                return;
-            }
+        if ( !installEvenIfAlreadyInstalled && isModInstalled(mapData.id) ) {
+            trace(mapData.id + " was already installed!");
+            return;
         }
 
         // before we do anything, let's make sure we downloaded all dependencies... if we haven't, we need to stop and queue this installation for later
@@ -351,7 +347,6 @@ class Downloader {
 
             // unzip actual mod now
             unzip( getFullPath( Path.addTrailingSlash(Main.DOWNLOAD_PATH) + mapData.id + ".zip"), unzipRoot, mapData );
-            trace("successfully unzipped " + mapData.id + " to " + unzipRoot );
 
             // write mapdb.json for KexQuake (or any other engine after it)
             var mapManifest = getMapManifest(mapData);
@@ -366,12 +361,14 @@ class Downloader {
     }
 
     public function onInstallMapSuccess(mapID:String) {
+        currentMapDownloadID = "";
         updateStatusBar();
-        Overlay.notify(mapID, "finished installing " + Database.instance.db[mapID].title);
+        Overlay.notify(mapID, "INSTALL COMPLETE: " + Database.instance.db[mapID].title);
         Database.instance.refreshState(mapID);
     }
 
     public function onInstallMapError(mapID:String, error:String) {
+        currentMapDownloadID = "";
         updateStatusBar();
         Overlay.notify(mapID, 'install error ($error) ' + Database.instance.db[mapID].title );
         Database.instance.refreshState(mapID);
@@ -416,6 +413,12 @@ class Downloader {
                 sys.FileSystem.createDirectory(localUnzipPath + finalUnzipPath[_entry.fileName] );
             } else {
                 try {
+                    // just to be really sure, make sure we created the directory before unzipping the file
+                    var directory = Path.directory(localUnzipPath + finalUnzipPath[_entry.fileName]);
+                    if ( !sys.FileSystem.exists(directory) ) {
+                        sys.FileSystem.createDirectory(directory);
+                    }
+                    // ok unzip the file now
                     var f = File.write(localUnzipPath + finalUnzipPath[_entry.fileName], true);
                     f.write(data);
                     f.close();
@@ -425,14 +428,14 @@ class Downloader {
             }
             // trace("unzip " + _entry.fileName + " >> " + finalUnzipPath[_entry.fileName]);
         }
-        // trace("unzip complete!");
+        trace("unzipped " + mapData.id + " to " + localUnzipPath );
 
         bytesInput.close();
         return entries;
     }
 
     // things we'd expect to find in the game mod folder root
-    static var rootSubItems:Array<String> = [ "progs.dat", "pak0.pak", "pak1.pak", "pak2.pak", "maps/", "progs/", "gfx/", "textures/", "sound/", "music/"];
+    static var rootSubItems:Array<String> = [ "progs.dat", "pak0.pak", "pak1.pak", "pak2.pak", "quake.rc", "maps/", "progs/", "gfx/", "textures/", "sound/", "music/"];
 
     public static function getRootModFolderInZipIfAny(zipFilePath:String, ?entries:List<Entry>):String {
         if ( entries == null ) { // if no pre-existing ZIP file entries supplied, then generate our own
@@ -457,7 +460,7 @@ class Downloader {
             }
 
             if ( rootModFolder != null) {
-                trace("found root mod folder inside .ZIP: " + rootModFolder);
+                // trace("found root mod folder inside .ZIP: " + rootModFolder);
                 break;
             }
         }
