@@ -56,7 +56,7 @@ class Search extends VBox {
 
     @:bind(backButton, MouseEvent.CLICK)
     private function onBackButton(e:MouseEvent) {
-        hide();
+        Main.showTopMostLayerAndMoveThisToBack(this);
         // Database.refreshAllStates();
     }
 

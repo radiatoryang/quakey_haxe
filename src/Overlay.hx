@@ -1,5 +1,6 @@
 package ;
 
+import haxe.io.Path;
 import haxe.ui.events.MouseEvent;
 import haxe.Timer;
 import haxe.ui.core.Screen;
@@ -74,7 +75,7 @@ class Overlay extends HBox {
     public function addNotify(mapID:String, notifyMessage:String) {
         var timestamp = DateTime.local();
 
-        var mapThumbImagePath = Main.CACHE_PATH + "/" + mapID + "_injector.jpg";
+        var mapThumbImagePath = Path.addTrailingSlash(Main.CACHE_PATH) + mapID + Downloader.thumbnailSuffix;
         Downloader.instance.allocateAndCacheImage(mapThumbImagePath);
         // TODO: load placeholder image if null
 

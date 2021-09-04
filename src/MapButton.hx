@@ -31,7 +31,7 @@ class MapButton extends Button {
         usually only call this when the MapButton itself becomes visible on-screen, 
         since there's no point in downloading images for an off-screen button **/
     public function onVisibleInScreenBounds() {
-        Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoaded );
+        Downloader.instance.getImageAsync(mapData.id + Downloader.thumbnailSuffix, onImageLoaded );
         Database.instance.subscribeToState(mapData.id, onRefresh);
     }
 

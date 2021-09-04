@@ -1,5 +1,10 @@
 package;
 
+import resizer.Pixels;
+import hxd.res.Image;
+import resizer.ImageResize;
+import format.jpg.Writer;
+import format.jpg.Data;
 import haxe.Json;
 import haxe.Timer;
 import haxe.Http;
@@ -27,6 +32,13 @@ class Downloader {
     var downloadThreadPool: ElasticThreadPool; // ZIP files
     var threadPool: ElasticThreadPool; // XML,  images
     var localLoader:Loader;
+
+    public static inline var thumbnailSuffix = "_injector.jpg";
+    // static inline var thumbnailWidth = 500;
+    // static inline var thumbnailHeight = 375;
+    // static inline var thumbnailResizeRatio = 0.512;
+    // var resizer: ImageResize = new ImageResize(new BicubicKernel() ); // used to resize images to 128x128 to try to save memory
+
     var refreshTimer:Timer;
 
     var currentMapDownload: HttpQuakey;
@@ -534,7 +546,19 @@ class Downloader {
             var url = "https://www.quaddicted.com/reviews/screenshots/" + filename;
             var http = new haxe.Http(url);
             http.onBytes = function(bytes) { 
-                File.saveBytes(fullPath, bytes); 
+                // commented out resizing code for now
+                // if ( bytes.toString().contains("html") ) { // don't try to parse the 404 HTML page
+                //     File.saveBytes(fullPath, bytes);
+                // } else if (filename.endsWith(thumbnailSuffix)) { // resize thumbnails to be nearest power of two, see if that saves memory?
+                //     @:privateAccess var img = Image.decodeJPG(bytes, thumbnailWidth, thumbnailHeight, hxd.PixelFormat.BGRA, false);
+                //     var resizedImg = resizer.scale( Pixels.fromHeapsPixels(img), thumbnailResizeRatio );
+                //     var fileWriter = File.write(fullPath, true);
+                //     var jpgWriter = new format.jpg.Writer( fileWriter );
+                //     jpgWriter.write( { width: resizedImg.width, height: resizedImg.height, quality: 75, pixels: resizedImg.bytes } );
+                //     fileWriter.close();
+                // } else {
+                    File.saveBytes(fullPath, bytes); 
+                // }
                 Main.mainThread.events.run( () -> { callback(localPath); } );
                 trace('saved $localPath to $fullPath');
             }
@@ -577,9 +601,15 @@ class Downloader {
     }
 
     function cacheImage(filepath:String, image:hxd.res.Image) {
-        var imageData = { width: image.getSize().width, height: image.getSize().height, data: image.toBitmap() };
-        @:privateAccess ToolkitAssets.instance._imageCache.set(filepath, imageData);
-        TileCache.set(filepath, image.toTile() );
+        try {
+            var imageData = { width: image.getSize().width, height: image.getSize().height, data: image.toBitmap() };
+            @:privateAccess ToolkitAssets.instance._imageCache.set(filepath, imageData);
+            TileCache.set(filepath, image.toTile() );
+        } catch(e) {
+            trace( "ERROR Downloader.cacheImage: " + e.message );
+            // this just happens sometimes when it can't decode the JPG? race conditions?
+            // but it's not so bad to just keep going, it seems to be able to recover
+        }
     }
 
     function uncacheImage(filepath:String) {

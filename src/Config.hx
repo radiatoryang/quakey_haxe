@@ -56,7 +56,7 @@ class Config extends VBox {
         super.show();
         loadFromFileIfExists();
         buttonAutoConfig.hide();
-        Main.moveToFrontButBeneathNotifications(this);
+        Main.moveToFront(this);
         refreshValidate(null);
     }
 
@@ -411,6 +411,8 @@ class Config extends VBox {
         trace("using config: " + lastGoodConfig);
         if ( !Main.startupDone ) {
             Main.continueStartupForRealNoSeriously();
+        } else {
+            Main.showTopMostLayerAndMoveThisToBack(this);
         }
         hide();
     }

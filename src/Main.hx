@@ -1,5 +1,6 @@
 package ;
 
+import haxe.ui.containers.Absolute;
 import haxe.ui.containers.dialogs.Dialog;
 import haxe.ui.containers.dialogs.Dialogs;
 import haxe.ui.core.Component;
@@ -27,7 +28,7 @@ using StringTools;
 class Main {
 
     static var db:Database;
-    public static var app:HaxeUIApp;
+    static var app:HaxeUIApp;
     public static var mainView:MainView;
     public static var mainThread:Thread;
 
@@ -35,6 +36,7 @@ class Main {
     public static var startupDone:Bool = false;
 
     static var embedLoader:Loader;
+    public static var container:Absolute;
     static var splashScreen:VBox;
     static var delayConnectionTest:Timer;
     static var configScreen:VBox;
@@ -100,9 +102,14 @@ class Main {
             TextDisplayImpl.alphaCutoff = 0.5;
             TextDisplayImpl.smoothing = 0.05;
 
+            // create a container component that we will parent everything to, since there's a sorting bug with just adding everything directly to screen root
+            container = ComponentMacros.buildComponent("assets/container.xml");
+            app.addComponent(container);
+
             // display splash screen while we load stuff
             splashScreen = ComponentMacros.buildComponent("assets/start-splash.xml");
-            app.addComponent(splashScreen);
+            container.addComponent(splashScreen);
+
             app.start();
 
             // try to download data from Quaddicted, which WILL BLOCK execution! but that's ok at startup
@@ -164,7 +171,7 @@ class Main {
 
         // initialize config
         configScreen = Config.init();
-        app.addComponent( configScreen );
+        container.addComponent( configScreen );
 
         // if config is nonexistent or bad
         if ( Config.instance.lastGoodConfig == null || !Config.validateConfig(Config.instance.lastGoodConfig) ) {
@@ -186,21 +193,57 @@ class Main {
         }
 
         mainView = new MainView();
-        app.addComponent(mainView);
+        container.addComponent(mainView);
 
-        app.addComponent( Overlay.init() );
+        container.addComponent( Overlay.init() );
         Downloader.init();
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 
-        app.addComponent( Search.init() );
+        container.addComponent( Search.init() );
+        Search.instance.moveComponentToBack();
         Search.instance.hide();
 
+        splashScreen.moveComponentToBack();
         splashScreen.hide();
+        @:privateAccess splashScreen.destroyComponent(); 
+        @:privateAccess splashScreen.dispose();
+    }
+
+    public static function showTopMostLayerAndMoveThisToBack(moveThisToBack:Component) {
+        moveThisToBack.moveComponentToBack();
+        moveThisToBack.hide();
+        trace(container.childComponents.join(", "));
+        var i = container.childComponents.length-1;
+        while ( i >= 0 ) {
+            if ( container.childComponents[i] == Overlay.instance ) {
+                Overlay.instance.show();
+            } else {
+                container.childComponents[i].show();
+                break;
+            }
+            i--;
+        }
+    }
+
+    public static function moveToFront(frontComponent:Component) {
+        for( component in container.childComponents ) {
+            component.hide();
+        }
+        frontComponent.moveComponentToFront();
+        frontComponent.show();
     }
 
     public static function moveToFrontButBeneathNotifications(frontComponent:Component) {
-        Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
-        Screen.instance.setComponentIndex(Overlay.instance, Screen.instance.rootComponents.length - 1 );
+        for( component in container.childComponents ) {
+            component.hide();
+        }
+        frontComponent.moveComponentToFront();
+        frontComponent.show();
+        Overlay.instance.moveComponentToFront();
+        Overlay.instance.show();
+
+        // Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
+        // Screen.instance.setComponentIndex(Overlay.instance, Screen.instance.rootComponents.length - 1 );
 
         // if ( Screen.instance.rootComponents[Screen.instance.rootComponents.length-1] == Overlay.instance ) {
         //     Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );

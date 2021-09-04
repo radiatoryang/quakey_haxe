@@ -151,7 +151,7 @@ class MapProfile extends VBox {
             }
         }
 
-        Downloader.instance.getImageAsync(mapData.id + "_injector.jpg", onImageLoadedPreview );
+        Downloader.instance.getImageAsync(mapData.id + Downloader.thumbnailSuffix, onImageLoadedPreview );
         Downloader.instance.getImageAsync(mapData.id + ".jpg", onImageLoaded );
 
         Database.instance.subscribeToState(mapData.id, onRefresh);
@@ -225,6 +225,7 @@ class MapProfile extends VBox {
     @:bind(backButton, MouseEvent.CLICK)
     private function onBackButton(e:MouseEvent) {
         Database.refreshAllStates();
+        Main.showTopMostLayerAndMoveThisToBack(this);
         disposeProfile(this);
     }
 
@@ -311,7 +312,7 @@ class MapProfile extends VBox {
             // mapProfile.percentHeight = 100;
             // mapProfile.includeInLayout = false;
             mapProfile.mapData = mapData;
-            Main.app.addComponent(mapProfile);
+            Main.container.addComponent(mapProfile);
             MapProfile.cache.set(mapData.id, mapProfile);
         }
         var mapProfile = MapProfile.cache[mapData.id];

@@ -1,4 +1,4 @@
-<hbox id="menuBar">
+<hbox id="menuBar" width="100%" height="48">
     <spacer width="8" />
     <image resource="images/icon_quakey.png" width="32" height="32" opacity="0.69" />
     <spacer width="8" />
