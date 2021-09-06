@@ -357,7 +357,7 @@ class MapProfile extends VBox {
         mapProfile.show();
 
         // temp for testing
-        Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
+        Notify.notify(mapData.id, "opened " + mapData.title);
     }
 
     public static function clearProfileCache() {

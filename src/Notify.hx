@@ -8,7 +8,9 @@ import haxe.ui.containers.VBox;
 import haxe.ui.events.ItemEvent;
 import datetime.DateTime;
 
-/** draw menu bar, handle notifications and logging **/
+/** draw menu bar, handle notifications and logging
+    TEMPORARILY DISABLED, HALF-FINISHED WITH BUGS
+ **/
 @:build(haxe.ui.ComponentBuilder.build("assets/notify.xml"))
 class Notify extends VBox {
 
@@ -65,13 +67,17 @@ class Notify extends VBox {
         top = Screen.instance.height - height;
     }
 
-    /** helper for Overlay.instance.addNotify() **/
+    /** helper for Notify.instance.addNotify() **/
     public static function notify(mapID:String, notifyMessage:String) {
-        if ( instance == null ) {
-            trace('Overlay instance was null, could not notify for $mapID : $notifyMessage');
-            return;
-        }
-        instance.addNotify( mapID, notifyMessage );
+        var timestamp = DateTime.local();
+        trace(timestamp.format("%T") + '($mapID) ' + notifyMessage);
+
+        // disabled half-finished Notifications system
+        // if ( instance == null ) {
+        //     trace('Overlay instance was null, could not notify for $mapID : $notifyMessage');
+        //     return;
+        // }
+        // instance.addNotify( mapID, notifyMessage );
     }
 
     public function addNotify(mapID:String, notifyMessage:String) {

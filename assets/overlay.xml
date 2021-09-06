@@ -6,6 +6,6 @@
     <spacer width="100%" />
     <button id="homeButton" icon="images/icon_home.png" tooltip="Main view" />
     <button id="searchButton" icon="images/icon_search.png" tooltip="Search maps" />
-    <button id="notifyButton" icon="images/icon_bell.png" tooltip="Notification log" />
+    <!--<button id="notifyButton" icon="images/icon_bell.png" tooltip="Notification log" />-->
     <button id="configButton" icon="images/icon_gear.png" tooltip="Configure Quake paths" />
 </hbox>

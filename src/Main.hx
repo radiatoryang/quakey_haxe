@@ -196,7 +196,7 @@ class Main {
         container.addComponent(mainView);
 
         app.addComponent( Overlay.init() );
-        app.addComponent( Notify.init() );
+        // app.addComponent( Notify.init() ); // temporarily disable half-finished Notifications system
         Downloader.init();
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 
