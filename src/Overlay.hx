@@ -39,7 +39,7 @@ class Overlay extends HBox {
     }
 
     @:bind(searchButton, MouseEvent.CLICK)
-    private function openSearch(e) {
+    private function openSearch(e:MouseEvent) {
         Search.instance.showSearch();
     }
 

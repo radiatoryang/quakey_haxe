@@ -117,5 +117,6 @@ class MainView extends VBox {
         comp.left = 0;
         comp.top = MainView.MENU_BAR_HEIGHT;
         comp.height = haxe.ui.core.Screen.instance.height - MainView.MENU_BAR_HEIGHT;
+        comp.validateNow();
     }
 }

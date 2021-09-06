@@ -195,7 +195,7 @@ class Main {
         mainView = new MainView();
         container.addComponent(mainView);
 
-        container.addComponent( Overlay.init() );
+        app.addComponent( Overlay.init() ); // overlay stays in its own thing?
         Downloader.init();
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 
@@ -217,8 +217,10 @@ class Main {
         while ( i >= 0 ) {
             if ( container.childComponents[i] == Overlay.instance ) {
                 Overlay.instance.show();
+                // Overlay.instance.validateNow();
             } else {
                 container.childComponents[i].show();
+                // container.childComponents[i].validateNow();
                 break;
             }
             i--;
@@ -230,7 +232,8 @@ class Main {
             component.hide();
         }
         frontComponent.moveComponentToFront();
-        frontComponent.show();
+        // frontComponent.show();
+        // frontComponent.validateNow();
     }
 
     public static function moveToFrontButBeneathNotifications(frontComponent:Component) {
@@ -239,8 +242,10 @@ class Main {
         }
         frontComponent.moveComponentToFront();
         frontComponent.show();
+        // frontComponent.validateNow();
         Overlay.instance.moveComponentToFront();
         Overlay.instance.show();
+        // Overlay.instance.validateNow();
 
         // Screen.instance.setComponentIndex(frontComponent, Screen.instance.rootComponents.length - 2 );
         // Screen.instance.setComponentIndex(Overlay.instance, Screen.instance.rootComponents.length - 1 );
