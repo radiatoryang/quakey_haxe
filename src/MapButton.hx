@@ -41,7 +41,8 @@ class MapButton extends Button {
             case NotQueued: "";
             case Queued: "QUEUED";
             case Downloading: "DOWNLOADING ";
-            case Downloaded: "INSTALLING";
+            case Downloaded: "DOWNLOADED";
+            case Installing: "INSTALLING";
             case Installed: "READY";
         }
         if ( mapState.status == Downloading ) {

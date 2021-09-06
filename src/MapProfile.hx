@@ -184,11 +184,15 @@ class MapProfile extends VBox {
                 buttonQueue.disabled = true;
                 toggleFileButtons(false);
             case Downloaded: 
+                buttonQueue.text = "INSTALL";
+                buttonQueue.disabled = false;
+                toggleFileButtons(true);
+            case Installing: 
                 buttonQueue.text = "INSTALLING...";
                 buttonQueue.disabled = true;
-                toggleFileButtons(true);
+                toggleFileButtons(false);
             case Installed: 
-                buttonQueue.text =  "PLAY >";
+                buttonQueue.text =  "PLAY";
                 buttonQueue.disabled = false;
                 toggleFileButtons(true);
         }
@@ -234,6 +238,8 @@ class MapProfile extends VBox {
         switch( Database.instance.getState(mapData.id, false).status ) {
             case NotQueued: 
                 UserState.instance.queueMap( mapData.id );
+            case Downloaded:
+                Downloader.instance.queueMapInstall(mapData, true);
             case Installed: 
                 UserState.instance.moveMapToFrontOfQueue( mapData.id );
                 Launcher.launch(mapData);

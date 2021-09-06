@@ -26,9 +26,9 @@ class Notify extends VBox {
 
     private function new() {
         super();
+        hideFullNotifications();
         refresh();
         refreshTimer.run = refresh;
-
     }
 
     public override function onResized() {
@@ -44,19 +44,19 @@ class Notify extends VBox {
 
     public function hideFullNotifications() {
         notifyList.dataSource.filter( function(index, item) {
-            return item.hide == null || item.hide == false; // this example will filter out any odd items
+            return item.visible; // this example will filter out any odd items
         } );
     }
 
     function refresh() {
         for( i in 0...notifyList.dataSource.size ) {
             var data = notifyList.dataSource.get(i);
-            if ( data == null )
+            if ( data == null || data.visible == false )
                 continue;
             data.notifyTime = Database.getRelativeTime(data.time);
             if ( (DateTime.local() - data.time).getTotalSeconds() >= DISAPPEAR_TIME ) {
                 // notifyList.dataSource.removeAt(i);
-                notifyList.dataSource.get(i).hide = true;
+                data.visible = false;
             }
         }
 
@@ -81,7 +81,7 @@ class Notify extends VBox {
         Downloader.instance.allocateAndCacheImage(mapThumbImagePath);
         // TODO: load placeholder image if null
 
-        notifyList.dataSource.add( {notifyImage: mapThumbImagePath, notifyID: mapID, notifyText: notifyMessage, time: timestamp, notifyTime: Database.getRelativeTime(timestamp)} );
+        notifyList.dataSource.add( {notifyImage: mapThumbImagePath, notifyID: mapID, notifyText: notifyMessage, time: timestamp, visible: true, notifyTime: Database.getRelativeTime(timestamp)} );
         Screen.instance.setComponentIndex(this, Screen.instance.rootComponents.length );
         trace(timestamp.format("%T") + " - " + notifyMessage);
         refresh();
@@ -94,10 +94,10 @@ class Notify extends VBox {
         if ( e.source.id == "notifyZoom" ) {
             MapProfile.openMapProfile( Database.instance.db[e.data.notifyID] );
         }
-        if ( notifyList.dataSource.get(e.itemIndex).hide != null && notifyList.dataSource.get(e.itemIndex).hide ) {
+        if ( notifyList.dataSource.get(e.itemIndex).visible ) {
             notifyList.dataSource.removeAt( e.itemIndex ); // dismiss permanently
         } else {
-            notifyList.dataSource.get(e.itemIndex).hide = true;
+            notifyList.dataSource.get(e.itemIndex).visible = false;
         }
         unreadCount--;
         refresh();

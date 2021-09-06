@@ -228,6 +228,8 @@ class Database {
 
         if ( Downloader.isModInstalled(mapID) ) {
             states[mapID].status = MapStatus.Installed;
+        } else if ( Downloader.instance.installQueue.contains(mapID) ) {
+            states[mapID].status = MapStatus.Installing;
         } else if ( Downloader.isMapDownloaded(mapID) ) {
             states[mapID].status = MapStatus.Downloaded;
         } else if ( mapID == Downloader.instance.currentMapDownloadID ) {
@@ -301,5 +303,6 @@ enum MapStatus {
     Queued;
     Downloading;
     Downloaded;
+    Installing;
     Installed;
 }

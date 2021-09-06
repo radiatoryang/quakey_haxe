@@ -37,7 +37,7 @@
                     <spacer width="31%" />
                     <vbox width="256px" height="100%">
                         <spacer height="16" />
-                        <label text="Activity" id="activity" />
+                        <label text="Activity" id="activity" styleName="smallText" />
                         <button id="buttonQueue" icon="images/icon_queue.png" styleName="biggerButton" text="QUEUE" />
                         <button id="buttonMark" icon="images/icon_checkbox.png" styleName="bigButton" text="MARK DONE AND HIDE" tooltip="hidden mods won't be recommended in playlists or searches\n (you can unhide it in your Profile settings)"/>
                         <hbox id="menuManage" width="100%">
@@ -46,7 +46,7 @@
                             <button id="buttonReinstall" icon="images/icon_gear.png" tooltip="MOVE INSTALL TO...\n by default, Quakey puts each mod in a\n new folder but you can override it\n (like put many mods in one big folder)\n (warning: this disables all file buttons since\n Quakey won't know where files belong)" />
                             <button id="buttonBrowse" icon="images/icon_folder.png" tooltip="BROWSE FILES\n reveals this installed mod folder in Explorer" />
                         </hbox>
-                        <button id="buttonQuad" icon="images/icon_talk.png" styleName="bigButton" text="DISCUSS @ QUADDICTED" />
+                        <button id="buttonQuad" icon="images/icon_talk.png" styleName="bigButton" text="SEE ON QUADDICTED" />
                     </vbox>
                     <spacer width="16" />
                 </hbox>

@@ -43,6 +43,7 @@ class Downloader {
 
     var currentMapDownload: HttpQuakey;
     public var currentMapDownloadID(default, null):String;
+    public var installQueue:Array<String> = new Array<String>();
 
     public static function init() {
         instance = new Downloader();
@@ -310,12 +311,16 @@ class Downloader {
     public function queueMapInstall(mapData:MapEntry, canQueueDownload:Bool=false, installEvenIfAlreadyInstalled:Bool=false) {
         if ( !installEvenIfAlreadyInstalled && isModInstalled(mapData.id) ) {
             trace(mapData.id + " was already installed!");
+            while ( installQueue.contains(mapData.id) ) {
+                installQueue.remove(mapData.id);
+            }
             return;
         }
 
         // before we do anything, let's make sure we downloaded all dependencies... if we haven't, we need to stop and queue this installation for later
+        installQueue.push(mapData.id);
 
-        // TODO: also search command lines for possible dependencies?
+        // TODO: also search command lines for possible dependencies? (e.g. quoth, armagon, etc)
         if ( mapData.techinfo != null && mapData.techinfo.requirements != null && mapData.techinfo.requirements.length > 0) {
             for( req in mapData.techinfo.requirements) {
                 if ( !Downloader.isMapDownloaded(req) ) {
@@ -382,14 +387,22 @@ class Downloader {
         currentMapDownloadID = "";
         updateStatusBar();
         Notify.notify(mapID, "INSTALL COMPLETE: " + Database.instance.db[mapID].title);
-        Database.instance.refreshState(mapID);
+        
         UserState.instance.setActivity(mapID, UserState.ActivityType.Installed);
+        while ( installQueue.contains(mapID) ) {
+            installQueue.remove(mapID);
+        }
+        Database.instance.refreshState(mapID);
     }
 
     public function onInstallMapError(mapID:String, error:String) {
         currentMapDownloadID = "";
         updateStatusBar();
         Notify.notify(mapID, 'install error ($error) ' + Database.instance.db[mapID].title );
+        
+        while ( installQueue.contains(mapID) ) {
+            installQueue.remove(mapID);
+        }
         Database.instance.refreshState(mapID);
     }
 
@@ -586,20 +599,20 @@ class Downloader {
             return null;
         }
 
-        var data = localLoader.load(filepath);
-
-        // double check the file isn't an html 
-        var text = data.toText();
-        if ( text.contains("<html>") ) {
-            return null;
-        }
-
         try {
+            var data = localLoader.load(filepath);
+
+            // double check the file isn't an html 
+            var text = data.toText(); // TODO: this fails sometimes... why?
+            if ( text.contains("<html>") ) {
+                return null;
+            }
+
             cacheImage(filepath, data.toImage() );
         } catch(e) {
             trace( "ERROR Downloader.cacheImage: " + e.message );
             // this just happens sometimes when it can't decode the JPG? or if detecting the "HTML" string doesn't work for some reason?
-            // but it's not so bad to just keep going, it seems to be able to recover
+            // but it's not so bad to just keep going, it seems to be able to recover later
             return null;
         }
 
