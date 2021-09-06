@@ -172,7 +172,7 @@ class MapProfile extends VBox {
         // trace("MapProfile.onRefresh for " + mapData.id);
         switch( mapState.status ) {
             case NotQueued: 
-                buttonQueue.text = "QUEUE DOWNLOAD";
+                buttonQueue.text = "QUEUE";
                 buttonQueue.disabled = false;
                 toggleFileButtons(false);
             case Queued: 
@@ -320,7 +320,7 @@ class MapProfile extends VBox {
         mapProfile.show();
 
         // temp for testing
-        // Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
+        Notify.instance.addNotify(mapData.id, "opened " + mapData.title);
     }
 
     public static function clearProfileCache() {

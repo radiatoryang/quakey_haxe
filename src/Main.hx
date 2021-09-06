@@ -195,7 +195,8 @@ class Main {
         mainView = new MainView();
         container.addComponent(mainView);
 
-        app.addComponent( Overlay.init() ); // overlay stays in its own thing?
+        app.addComponent( Overlay.init() );
+        app.addComponent( Notify.init() );
         Downloader.init();
         Downloader.instance.queueAllMapDownloads( UserState.instance.currentData.mapQueue );
 

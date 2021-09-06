@@ -93,7 +93,7 @@ class Launcher {
             }
 
             if ( !suppressNotify) {
-                Overlay.notify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
+                Notify.notify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
             } else {
                 trace("LAUNCHING: " + quakeExePath + " " + args.join(" "));
             }
@@ -117,7 +117,7 @@ class Launcher {
             }
         } catch (e) {
             if ( !suppressNotify && mapData != null) {
-                Overlay.notify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
+                Notify.notify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
             } else {
                 trace("ERROR, can't launch " + quakeExePath + "because: " + e.message);
             }
