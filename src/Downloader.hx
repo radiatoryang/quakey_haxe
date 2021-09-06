@@ -545,6 +545,7 @@ class Downloader {
         if ( !FileSystem.exists(fullPath) ) {
             var url = "https://www.quaddicted.com/reviews/screenshots/" + filename;
             var http = new haxe.Http(url);
+            http.cnxTimeout = 10;
             http.onBytes = function(bytes) { 
                 // commented out resizing code for now
                 // if ( bytes.toString().contains("html") ) { // don't try to parse the 404 HTML page

@@ -1,5 +1,6 @@
 package ;
 
+import json2object.JsonParser;
 import datetime.DateTime;
 import haxe.io.Path;
 import sys.FileSystem;
@@ -72,7 +73,7 @@ class UserState {
     }
 
     public function setActivity(mapID:String, activity:ActivityType) {
-        currentData.mapActivity.set(mapID, {timestamp: DateTime.now().toString(), activity: activity });
+        currentData.mapActivity.set(mapID, {timestamp: DateTime.local().toString(), activity: activity });
         saveUser();
     }
 
@@ -104,7 +105,8 @@ class UserState {
         }
 
         var fileData = File.getContent(filename);
-        var newData:UserData = Json.parse(fileData); // TODO: exception handling?
+        var parser = new JsonParser<UserData>();
+        var newData:UserData = parser.fromJson(fileData, filename);
         return newData;
     }
 
@@ -141,8 +143,8 @@ typedef UserActivity = {
     var activity: ActivityType;
 }
 
-enum ActivityType {
-    Queued;
-    Installed;
-    Played;
+enum abstract ActivityType(String) {
+    var Queued;
+    var Installed;
+    var Played;
 }

@@ -9,6 +9,7 @@
 
 -lib datetime
 -lib haxe-files
+-lib json2object
 
 -D resourcesPath=assets
 -D windowTitle=Quakey
