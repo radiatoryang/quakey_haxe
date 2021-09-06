@@ -15,6 +15,8 @@ class Notify extends VBox {
     public static var instance:Notify;
     static inline var REFRESH_INTERVAL = 1;
     static inline var DISAPPEAR_TIME = 15;
+
+    var unreadCount = 0;
     var refreshTimer:Timer = new Timer( REFRESH_INTERVAL * 1000);
 
     public static function init() {
@@ -26,11 +28,24 @@ class Notify extends VBox {
         super();
         refresh();
         refreshTimer.run = refresh;
+
     }
 
     public override function onResized() {
         super.onResized();
         refresh();
+    }
+
+    public function showFullNotifications() {
+        notifyList.dataSource.filter( function(index, item) {
+            return true; // this example will filter out any odd items
+        } );
+    }
+
+    public function hideFullNotifications() {
+        notifyList.dataSource.filter( function(index, item) {
+            return item.hide == null || item.hide == false; // this example will filter out any odd items
+        } );
     }
 
     function refresh() {
@@ -40,7 +55,8 @@ class Notify extends VBox {
                 continue;
             data.notifyTime = Database.getRelativeTime(data.time);
             if ( (DateTime.local() - data.time).getTotalSeconds() >= DISAPPEAR_TIME ) {
-                notifyList.dataSource.removeAt(i);
+                // notifyList.dataSource.removeAt(i);
+                notifyList.dataSource.get(i).hide = true;
             }
         }
 
@@ -69,7 +85,8 @@ class Notify extends VBox {
         Screen.instance.setComponentIndex(this, Screen.instance.rootComponents.length );
         trace(timestamp.format("%T") + " - " + notifyMessage);
         refresh();
-        
+
+        unreadCount++;
     }
 
     @:bind(notifyList, ItemEvent.COMPONENT_EVENT)
@@ -77,8 +94,15 @@ class Notify extends VBox {
         if ( e.source.id == "notifyZoom" ) {
             MapProfile.openMapProfile( Database.instance.db[e.data.notifyID] );
         }
-        notifyList.dataSource.removeAt( e.itemIndex );
+        if ( notifyList.dataSource.get(e.itemIndex).hide != null && notifyList.dataSource.get(e.itemIndex).hide ) {
+            notifyList.dataSource.removeAt( e.itemIndex ); // dismiss permanently
+        } else {
+            notifyList.dataSource.get(e.itemIndex).hide = true;
+        }
+        unreadCount--;
         refresh();
     }
+
+    
 
 }
