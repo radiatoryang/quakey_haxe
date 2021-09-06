@@ -43,7 +43,7 @@
                         <hbox id="menuManage" width="100%">
                             <button id="buttonDelete" icon="images/icon_trash.png" tooltip="DELETE FILES (but not dependencies)\n and does not hide nor unqueue it" />
                             <button id="buttonRedownload" icon="images/icon_download.png" tooltip="RE-DOWNLOAD AND RE-INSTALL\n if this mod is broken for some reason,\nthis might repair it? maybe?" />
-                            <button id="buttonReinstall" icon="images/icon_gear.png" tooltip="MOVE INSTALL TO...\n by default, Quakey puts each mod in a\n new folder but you can override it\n (like put many mods in one big folder)\n (warning: this disables all file buttons since\n Quakey won't know where files belong)" />
+                            <button id="buttonReinstall" icon="images/icon_gear.png" tooltip="RE-INSTALL TO...\n by default, Quakey puts each mod in a\n new folder but you can override it\n (like put many mods in one big folder)" />
                             <button id="buttonBrowse" icon="images/icon_folder.png" tooltip="BROWSE FILES\n reveals this installed mod folder in Explorer" />
                         </hbox>
                         <button id="buttonQuad" icon="images/icon_talk.png" styleName="bigButton" text="SEE ON QUADDICTED" />

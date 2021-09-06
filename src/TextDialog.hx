@@ -13,6 +13,7 @@ class TextDialog extends Dialog {
     public function new() {
         super();
         title = "Text Dialog";
+        closable = false;
         buttons = DialogButton.CANCEL | DialogButton.SAVE;
     }
 

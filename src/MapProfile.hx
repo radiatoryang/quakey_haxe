@@ -1,5 +1,7 @@
 package ;
 
+import haxe.ui.containers.dialogs.Dialog;
+import haxe.ui.containers.dialogs.MessageBox;
 import hx.concurrent.executor.Executor.TaskFutureBase;
 import Database.MapState;
 import datetime.utils.DateTimeMonthUtils;
@@ -252,14 +254,43 @@ class MapProfile extends VBox {
 
     @:bind(buttonDelete, MouseEvent.CLICK)
     private function onDeleteButton(e:MouseEvent) {
+        var newDialog = new Dialog();
+        newDialog.closable = false;
+        newDialog.draggable = false;
+        newDialog.buttons = haxe.ui.containers.dialogs.Dialog.DialogButton.CANCEL | haxe.ui.containers.dialogs.Dialog.DialogButton.OK;
+        newDialog.width = 500;
+        newDialog.dialogTitleLabel.text = "Quakey will delete everything in " + Downloader.getModInstallFolder(mapData) + " including save data, screenshots, etc. ARE YOU SURE?";
+        newDialog.onDialogClosed = function(e:haxe.ui.containers.dialogs.Dialog.DialogEvent) {
+            if ( e.button == haxe.ui.containers.dialogs.Dialog.DialogButton.OK ) {
+                doDelete();
+            } 
+        };
+        newDialog.showDialog();
+    }
+
+    function doDelete() {
         UserState.instance.dequeueMap( mapData.id );
         Downloader.instance.tryDeleteAll( mapData.id );
-
         forceRefresh();
     }
 
     @:bind(buttonRedownload, MouseEvent.CLICK)
     private function onRedownloadButton(e:MouseEvent) {
+        var newDialog = new Dialog();
+        newDialog.closable = false;
+        newDialog.draggable = false;
+        newDialog.buttons = haxe.ui.containers.dialogs.Dialog.DialogButton.CANCEL | haxe.ui.containers.dialogs.Dialog.DialogButton.OK;
+        newDialog.width = 500;
+        newDialog.dialogTitleLabel.text = "To reinstall everything cleanly and ensure compatibility, Quakey will delete everything in " + Downloader.getModInstallFolder(mapData) + " including save data, screenshots, etc. ARE YOU SURE?";
+        newDialog.onDialogClosed = function(e:haxe.ui.containers.dialogs.Dialog.DialogEvent) {
+            if ( e.button == haxe.ui.containers.dialogs.Dialog.DialogButton.OK ) {
+                doRedownload();
+            } 
+        };
+        newDialog.showDialog();
+    }
+
+    function doRedownload() {
         Downloader.instance.tryDeleteAll( mapData.id );
         Downloader.instance.queueMapDownload(mapData);
         forceRefresh();
