@@ -589,11 +589,18 @@ class Downloader {
 
         // double check the file isn't an html 
         var text = data.toText();
-        if ( text.startsWith("<html>") ) {
+        if ( text.contains("<html>") ) {
             return null;
         }
 
-        cacheImage(filepath, data.toImage() );
+        try {
+            cacheImage(filepath, data.toImage() );
+        } catch(e) {
+            trace( "ERROR Downloader.cacheImage: " + e.message );
+            // this just happens sometimes when it can't decode the JPG? or if detecting the "HTML" string doesn't work for some reason?
+            // but it's not so bad to just keep going, it seems to be able to recover
+            return null;
+        }
 
         localLoader.cleanCache();
 
@@ -601,15 +608,15 @@ class Downloader {
     }
 
     function cacheImage(filepath:String, image:hxd.res.Image) {
-        try {
+        // try {
             var imageData = { width: image.getSize().width, height: image.getSize().height, data: image.toBitmap() };
             @:privateAccess ToolkitAssets.instance._imageCache.set(filepath, imageData);
             TileCache.set(filepath, image.toTile() );
-        } catch(e) {
-            trace( "ERROR Downloader.cacheImage: " + e.message );
-            // this just happens sometimes when it can't decode the JPG? race conditions?
-            // but it's not so bad to just keep going, it seems to be able to recover
-        }
+        // } catch(e) {
+        //     trace( "ERROR Downloader.cacheImage: " + e.message );
+        //     // this just happens sometimes when it can't decode the JPG? race conditions?
+        //     // but it's not so bad to just keep going, it seems to be able to recover
+        // }
     }
 
     function uncacheImage(filepath:String) {
