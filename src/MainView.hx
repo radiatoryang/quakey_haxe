@@ -116,6 +116,7 @@ class MainView extends VBox {
     public static function moveBelowMenuBar(comp:Component) {
         comp.left = 0;
         comp.top = MainView.MENU_BAR_HEIGHT;
+        comp.percentHeight = null;
         comp.height = haxe.ui.core.Screen.instance.height - MainView.MENU_BAR_HEIGHT;
         comp.validateNow();
     }

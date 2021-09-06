@@ -208,6 +208,8 @@ class Main {
         splashScreen.hide();
         @:privateAccess splashScreen.destroyComponent(); 
         @:privateAccess splashScreen.dispose();
+
+        MainView.instance.showMainView();
     }
 
     public static function showTopMostLayerAndMoveThisToBack(moveThisToBack:Component) {
