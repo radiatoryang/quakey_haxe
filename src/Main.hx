@@ -230,7 +230,8 @@ class Main {
 
     public static function moveToFront(frontComponent:Component) {
         for( component in container.childComponents ) {
-            component.hide();
+            if ( component != frontComponent )
+                component.hide();
         }
         frontComponent.moveComponentToFront();
         // frontComponent.show();
