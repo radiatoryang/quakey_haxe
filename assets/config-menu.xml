@@ -4,15 +4,15 @@
         <label text="QUAKE CONFIGURATION" styleName="header-big" />
         <label width="100%" text="Quakey needs to know where to find Quake files and where to install mods. 
         **MAKE SURE QUAKE IS ALREADY INSTALLED!** If it isn't, then go install it and restart Quakey.
-        Usually, you can click SCAN FOR QUAKE FILES and then AUTO CONFIG." />
+        Most users can just (1) SCAN FOR QUAKE FILES, (2) AUTO CONFIG, (3) SAVE + USE CONFIG" />
         <spacer height="16" />
 
         <hbox width="100%">
-            <button id="buttonScan" text="SCAN FOR QUAKE FILES (recommended)" tooltip="Quakey will try to guess where Steam, GOG, or Bethesda installed Quake.\n - this will work for 99% of people\n - but if you installed Quake in an unusual place, it won't find it" />
+            <button id="buttonScan" icon="images/icon_folder.png" text="   SCAN FOR QUAKE FILES (recommended)" tooltip="Quakey will try to guess where Steam, GOG, or Bethesda installed Quake.\n - this will work for 99% of people\n - but if you installed Quake in an unusual place, it won't find it" />
             <spacer width="16" />
-            <button id="buttonAutoConfig" text="+ AUTO CONFIG (recommended)" tooltip="If Quakey has found Quake files on your computer\nthen it can automatically configure itself." />
+            <button id="buttonAutoConfig" icon="images/icon_magic.png" text="   + NEW AUTO CONFIG (recommended)" tooltip="If Quakey has found Quake files on your computer\nthen it can automatically configure itself." />
             <spacer width="16" />
-            <button id="buttonNewConfig" text="+ MANUAL CONFIG" tooltip="creates a new blank configuration\nfor those who know what they're doing"/>
+            <button id="buttonNewConfig" icon="images/icon_sliders.png" text="   + NEW MANUAL CONFIG" tooltip="creates a new blank configuration\nfor those who know what they're doing"/>
         </hbox>
         <spacer height="16" />
 
@@ -33,7 +33,7 @@
                 <button id="buttonEngineBrowse" styleName="configBrowseButton" text="Browse..." />
             </hbox>
 
-            <hbox width="100%" continuous="true" tooltip="where should Quakey install mods?\n - traditionally, in your Quake engine folder\n - but it's safer to install mods elsewhere">
+            <hbox width="100%" continuous="true" tooltip="where should Quakey install mods?\n - traditionally, in your Quake engine folder\n(required for Quake 2021 re-release engine)\n - but for any other engine, it's OK to put\nmods anywhere and keep your Quake folder clean">
                 <label styleName="formLabel" text="MOD FOLDER" />
                 <dropdown id="menuModsSelect" text="">
                 <textfield id="fieldMods" placeholder="" />
@@ -42,9 +42,10 @@
             </hbox>
             <hbox id="warningKex" width="100%">
                 <label styleName="formLabel" text="" /> <!--spacer-->
-                <label style="color: red;" text="ERROR: for KexQuake / QuakeEX (2021 re-release), mods MUST be installed in the same folder." />
+                <image resource="images/icon_error.png" width="24" height="24" />
+                <label style="color: red;" text="ERROR: for QuakeEX 2021 rerelease, you MUST install mods in /rerelease/ folder." />
                 <spacer width="16" />
-                <button id="warningKexButton" text="Fix" tooltip="change all paths and paks to work for QuakeEX" />
+                <button id="warningKexButton" icon="images/icon_wrench.png" text="   Auto-Fix" tooltip="change all paths and paks to work for QuakeEX" />
             </hbox>
 
             <hbox width="100%" continuous="true" tooltip="pak0.pak contains most of the core game data\n and it's usually found in /Quake/id1/">
@@ -56,9 +57,10 @@
             </hbox>
             <hbox id="warningPak0" width="100%">
                 <label styleName="formLabel" text="" /> <!--spacer-->
+                <image resource="images/icon_error.png" width="24" height="24" />
                 <label id="warningPak0Text" style="color: red;" text="ERROR: pak0.pak must be at /(MOD FOLDER)/id1/pak0.pak" />
                 <spacer width="16" />
-                <button id="warningPak0Button" text="Fix" tooltip="makes a copy of pak0.pak and put it in the right place\n(if there's already a pak0.pak there, it won't overwrite it)" />
+                <button id="warningPak0Button" icon="images/icon_wrench.png" text="   Auto-Fix" tooltip="makes a copy of pak0.pak and put it in the right place\n(if there's already a pak0.pak there, it won't overwrite it)" />
             </hbox>
 
             <hbox width="100%" continuous="true" tooltip="pak1.pak contains some more core game data\n and it's usually found in /Quake/id1/">
@@ -70,17 +72,18 @@
             </hbox>
             <hbox id="warningPak1" width="100%">
                 <label styleName="formLabel" text="" /> <!--spacer-->
+                <image resource="images/icon_error.png" width="24" height="24" />
                 <label id="warningPak1Text" style="color: red;" text="ERROR: pak1.pak must be at /(MOD FOLDER)/id1/pak1.pak" />
                 <spacer width="16" />
-                <button id="warningPak1Button" text="Fix" tooltip="makes a copy of pak1.pak and put it in the right place\n(if there's already a pak1.pak there, it won't overwrite it)" />
+                <button id="warningPak1Button" icon="images/icon_wrench.png" text="   Auto-Fix" tooltip="makes a copy of pak1.pak and put it in the right place\n(if there's already a pak1.pak there, it won't overwrite it)" />
             </hbox>
         </vbox>
         <spacer height="16" />
 
         <hbox width="100%" id="configBottom">
-            <button id="buttonConfigTest" styleName="biggerButton" text="TEST LAUNCH" />
-            <spacer width="16" />
-            <button id="buttonConfigFinish" styleName="biggerButton" text="SAVE + USE CONFIG" />
+            <button id="buttonConfigTest" icon="images/icon_lab_flask.png" styleName="biggerButton" text="TEST LAUNCH" tooltip="use this to verify all your file paths are good;\n it should boot into the Quake main menu screen" />
+            <spacer width="100%" />
+            <button id="buttonConfigFinish" icon="images/icon_save.png" styleName="biggerButton" text="SAVE + USE CONFIG" />
         </hbox>
     </scrollview>
 </vbox>

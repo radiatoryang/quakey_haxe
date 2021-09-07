@@ -165,7 +165,7 @@
     font-size: 16px;
 }
 
-#buttonQueue {
+#buttonQueue, #buttonLaunchOptions, #buttonConfigFinish {
     background-color: #544d3d;
 }
 

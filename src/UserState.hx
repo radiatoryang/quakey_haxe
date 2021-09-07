@@ -88,6 +88,17 @@ class UserState {
         saveUser();
     }
 
+    public function setOverrideLaunch(mapID:String, overrideParameters:String) {
+        currentData.overrideLaunchArguments.set(mapID, overrideParameters);
+        saveUser();
+    }
+
+    public function clearOverrideLaunch(mapID:String) {
+        if ( currentData.overrideLaunchArguments.exists(mapID) )
+            currentData.overrideLaunchArguments.remove(mapID);
+        saveUser();
+    }
+
     public static function getUsers():Array<String> {
         if (!FileSystem.exists(Main.BASE_DIR + USER_DIR))
             return null;

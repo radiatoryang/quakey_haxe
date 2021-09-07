@@ -15,6 +15,63 @@ class Launcher {
     public static var currentProcess:Process;
 
     public static function launch(?mapData:MapEntry, ?startmap:String, ?baseDir:String, ?quakeExePath:String, suppressNotify:Bool=false) {
+        if ( quakeExePath == null) {
+            quakeExePath = Config.instance.lastGoodConfig.quakeEnginePath;
+        }
+
+        var args = getActualLaunchArguments(mapData, startmap, baseDir, quakeExePath);
+
+        if ( !suppressNotify) {
+            Notify.notify( mapData.id, "LAUNCHING " + args);
+        } else {
+            trace("LAUNCHING: (" + (mapData != null ? mapData.id : "") + ") " + args);
+        }
+
+        UserState.instance.setActivity(mapData.id, UserState.ActivityType.Played);
+
+        return launchEngine(args, quakeExePath);
+    }
+
+    private static function launchEngine(?args:String, ?quakeExePath:String ) {
+        try {
+            var quakeFolderPath = Path.addTrailingSlash( Path.directory( quakeExePath ) );
+            var isQuakeEX = Config.isQuakeEX(quakeExePath);
+            var appidPath = Path.addTrailingSlash(quakeFolderPath) + "steam_appid.txt";
+
+            // use Steam protocol fallback... which doesn't quite work lol
+            if ( isQuakeEX && quakeExePath.toLowerCase().contains("steam") && !FileSystem.exists(appidPath) ) {
+                args = args.replace("/", "\\");
+                var url = "steam://run/2310//" + args + "/"; // TODO: use URL encoded quotation marks?
+                trace(url);
+                System.openURL(url); 
+            } else {
+                Sys.setCwd(quakeFolderPath);
+                currentProcess = new Process('"' + quakeExePath + '" ' + args);
+                // if ( currentProcess != null ) {
+                //     trace(currentProcess.exitCode(false));
+                //     trace( currentProcess.stdout.readAll().toString() );
+                //     trace( currentProcess.stderr.readAll().toString() );
+                // }
+            }
+        } catch (e) {
+            trace("ERROR, can't launch " + quakeExePath + " " + args + " because: " + e.message);
+            // throw e;
+            return false;
+        }
+        return true;
+    }
+
+    public static function getActualLaunchArguments(?mapData:MapEntry, ?startmap:String, ?baseDir:String, ?quakeExePath:String) {
+        if ( mapData != null && UserState.instance != null && UserState.instance.currentData.overrideLaunchArguments.exists(mapData.id) ) {
+            return UserState.instance.currentData.overrideLaunchArguments[mapData.id].replace("'", "\"");
+        } else {
+            return getDefaultLaunchArguments(mapData, startmap, baseDir, quakeExePath);
+        }
+    }
+
+    public static function getDefaultLaunchArguments(?mapData:MapEntry, ?startmap:String, ?baseDir:String, ?quakeExePath:String) {
+        var args = new Array<String>(); 
+
         try {
             if ( quakeExePath == null) {
                 quakeExePath = Config.instance.lastGoodConfig.quakeEnginePath;
@@ -50,8 +107,6 @@ class Launcher {
                 }
             }
 
-            // TODO: code custom stuff for Quake rerelease?
-
             var quakeFolderPath = Path.addTrailingSlash( Path.directory( quakeExePath ) );
             if ( baseDir == null ) {
                 if (Config.instance.lastGoodConfig != null) {
@@ -60,8 +115,6 @@ class Launcher {
                     baseDir = quakeFolderPath;
                 }
             }
-
-            var args = new Array<String>(); 
             
             // get command line arguments from database, but strip any "-game" commands out
             if (mapData != null && mapData.techinfo != null && mapData.techinfo.commandline != null && mapData.techinfo.commandline.contains("-game")) {
@@ -81,7 +134,6 @@ class Launcher {
             }
 
             if (mapData != null) {
-                UserState.instance.setActivity(mapData.id, UserState.ActivityType.Played);
                 if ( !isQuakeEX ) 
                     args.push( "-game " + Downloader.getModInstallFolderName(mapData) );
                 else
@@ -92,39 +144,11 @@ class Launcher {
                 args.push("+map " + startmap);
             }
 
-            if ( !suppressNotify) {
-                Notify.notify( mapData.id, "LAUNCHING: " + quakeExePath + " " + args.join(" "));
-            } else {
-                trace("LAUNCHING: " + quakeExePath + " " + args.join(" "));
-            }
-
-            // use Steam protocol fallback... which doesn't quite work lol
-            if ( isQuakeEX && quakeExePath.toLowerCase().contains("steam") && !FileSystem.exists(appidPath) ) {
-                for (i in 0...args.length) {
-                    args[i] = args[i].replace("/", "\\");
-                }
-                var url = "steam://run/2310//" + args.join(" ") + "/";
-                trace(url);
-                System.openURL(url); 
-            } else {
-                Sys.setCwd(quakeFolderPath);
-                currentProcess = new Process('"' + quakeExePath + '" ' + args.join(" "));
-                // if ( currentProcess != null ) {
-                //     trace(currentProcess.exitCode(false));
-                //     trace( currentProcess.stdout.readAll().toString() );
-                //     trace( currentProcess.stderr.readAll().toString() );
-                // }
-            }
+            return args.join(" ");
         } catch (e) {
-            if ( !suppressNotify && mapData != null) {
-                Notify.notify( mapData.id, "ERROR, can't launch " + mapData.id + "... " + e.message);
-            } else {
-                trace("ERROR, can't launch " + quakeExePath + "because: " + e.message);
-            }
-            // throw e;
-            return false;
+            trace("ERROR, couldn't generate default launch arguments, closest I got was " + args.join(" ") + "\n ... error message: " + e.message);
+            return null;
         }
-        return true;
     }
 
     public static function openInExplorer(filepath:String) {

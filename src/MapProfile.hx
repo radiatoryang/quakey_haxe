@@ -174,34 +174,41 @@ class MapProfile extends VBox {
         // trace("MapProfile.onRefresh for " + mapData.id);
         switch( mapState.status ) {
             case NotQueued: 
+                buttonLaunchOptions.show();
                 buttonQueue.text = "QUEUE";
                 buttonQueue.disabled = false;
                 toggleFileButtons(false);
             case Queued: 
+                buttonLaunchOptions.hide();
                 buttonQueue.text = "QUEUED...";
                 buttonQueue.disabled = true;
                 toggleFileButtons(false);
             case Downloading: 
+                buttonLaunchOptions.hide();
                 buttonQueue.text = "DOWNLOADING " + Std.string(Math.round(mapState.downloadProgress*100)) + "%";
                 buttonQueue.disabled = true;
                 toggleFileButtons(false);
             case Downloaded: 
+                buttonLaunchOptions.show();
                 buttonQueue.text = "INSTALL";
                 buttonQueue.disabled = false;
                 toggleFileButtons(true);
             case Installing: 
+                buttonLaunchOptions.hide();
                 buttonQueue.text = "INSTALLING...";
                 buttonQueue.disabled = true;
                 toggleFileButtons(false);
             case Installed: 
+                buttonLaunchOptions.show();
                 buttonQueue.text =  "PLAY";
                 buttonQueue.disabled = false;
                 toggleFileButtons(true);
         }
+        refreshQueueButtonTooltip(true);
         if (UserState.instance.currentData.mapActivity.exists(mapData.id)) {
             activity.show();
             var activ = UserState.instance.currentData.mapActivity[mapData.id];
-            activity.text = "last " + Std.string(activ.activity).toLowerCase() + " " + Database.getRelativeTime( DateTime.fromString(activ.timestamp) );
+            activity.text = "last " + Std.string(activ.activity).toLowerCase() + ": " + Database.getRelativeTime( DateTime.fromString(activ.timestamp) );
         } else {
             activity.hide();
         }
@@ -252,6 +259,67 @@ class MapProfile extends VBox {
         Database.instance.refreshState(mapData.id);
     }
 
+    @:bind(buttonQueue, MouseEvent.MOUSE_OVER)
+    private function onHoverQueueButton(e:MouseEvent) {
+        refreshQueueButtonTooltip(true);
+    }
+
+    private function refreshQueueButtonTooltip(refresh:Bool=false) {
+        switch( Database.instance.getState(mapData.id, refresh).status ) {
+            case NotQueued: 
+                buttonQueue.tooltip = "click to add this to your queue\nand Quakey will download and install it";
+            case Queued:
+                buttonQueue.tooltip = "Quakey is currently busy but it will\ndownload and install this soon";
+            case Downloading:
+                buttonQueue.tooltip = "Quakey is currently downloading this\nincluding any linked dependencies";
+            case Downloaded:
+                buttonQueue.tooltip = "click to install downloaded files";
+            case Installing:
+                buttonQueue.tooltip = "Quakey is currently installing this\nincluding any linked dependencies";
+            case Installed: 
+                buttonQueue.tooltip = "click to play with launch parameters\n" + Launcher.getActualLaunchArguments(mapData).replace(" -", "\n-").replace(" +", "\n+");
+        }
+    }
+
+    @:bind(buttonLaunchOptions, MouseEvent.CLICK)
+    private function onOptionsButton(e:MouseEvent) {
+        switch( Database.instance.getState(mapData.id, false).status ) {
+            case Installed:
+                openLaunchDialog();
+            case NotQueued:
+                openInstallFolderDialog();
+            case Downloaded:
+                openInstallFolderDialog();
+            default:
+                // do nothing
+        }
+    }
+
+    private function openLaunchDialog() {
+        var launchDialog = new TextDialog();
+        launchDialog.width = 1000;
+        launchDialog.title = "Override launch parameters";
+        launchDialog.defaultValue = Launcher.getDefaultLaunchArguments(mapData);
+        launchDialog.onDialogClosed = function(e:haxe.ui.containers.dialogs.Dialog.DialogEvent) {
+            if ( e.button == haxe.ui.containers.dialogs.Dialog.DialogButton.SAVE ) {
+                var dialogValue = launchDialog.getDialogValue();
+                if ( dialogValue != null && dialogValue.length > 0) {
+                    // commit new override settings and queue install
+                    // single quote vs double quote matters a lot for -basedir launch parameters, but breaks JSON, so it's... complicated
+                    if ( dialogValue.replace("'", "\"") == Launcher.getDefaultLaunchArguments(mapData) ) {
+                        UserState.instance.clearOverrideLaunch(mapData.id);
+                    } else {
+                        UserState.instance.setOverrideLaunch(mapData.id, dialogValue);
+                    }
+                } else {
+                    UserState.instance.clearOverrideLaunch(mapData.id);
+                }
+            }
+        };
+        launchDialog.rename.text = Launcher.getActualLaunchArguments(mapData).replace("'", "\"");
+        launchDialog.showDialog();
+    }
+
     @:bind(buttonDelete, MouseEvent.CLICK)
     private function onDeleteButton(e:MouseEvent) {
         var newDialog = new Dialog();
@@ -298,17 +366,21 @@ class MapProfile extends VBox {
 
     @:bind(buttonReinstall, MouseEvent.CLICK)
     private function onReinstallButton(e:MouseEvent) {
+        openInstallFolderDialog();
+    }
+
+    private function openInstallFolderDialog() {
         var changeFolderDialog = new TextDialog();
-        changeFolderDialog.title = "Re-install mod under folder name...";
+        changeFolderDialog.title = "Install this mod with folder name...";
         changeFolderDialog.defaultValue = Downloader.getModInstallFolderNameDefault(mapData);
         changeFolderDialog.onDialogClosed = function(e:haxe.ui.containers.dialogs.Dialog.DialogEvent) {
             if ( e.button == haxe.ui.containers.dialogs.Dialog.DialogButton.SAVE ) {
                 var dialogValue = changeFolderDialog.getDialogValue();
                 if ( dialogValue != null && dialogValue.length > 0) {
-                    // delete old install, if it used the default folder name
-                    if ( Downloader.getModInstallFolderName(mapData) == Downloader.getModInstallFolderNameDefault(mapData) ) {
-                        Downloader.instance.tryDeleteInstall(mapData.id);
-                    }
+                    // delete old install, if it used the default folder name (safe to delete?)
+                    // if ( Downloader.isModInstalled(mapData.id) && Downloader.getModInstallFolderName(mapData) == Downloader.getModInstallFolderNameDefault(mapData) ) {
+                    //     Downloader.instance.tryDeleteInstall(mapData.id);
+                    // }
                     // commit new override settings and queue install
                     if ( dialogValue == Downloader.getModInstallFolderNameDefault(mapData) ) {
                         UserState.instance.clearOverrideInstall(mapData.id);

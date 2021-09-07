@@ -24,6 +24,6 @@ class TextDialog extends Dialog {
 
     /** get value of the text field, sanitized and cleaned up **/
     public function getDialogValue() {
-        return rename.text.trim().replace('\"', ' ').replace('"', ' ').replace('\n', ' ').replace('\r', ' ').replace('\\', ' ');
+        return rename.text.trim().replace("\"", "'").replace('"', '\'').replace('\n', ' ').replace('\r', ' ').replace('\\', ' ');
     }
 }

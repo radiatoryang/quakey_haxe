@@ -336,6 +336,7 @@ class Config extends VBox {
         } else {
             fieldMods.borderColor = "red";
             validConfig = false;
+            warningKex.hide();
         }
 
         if ( isValidFile(fieldPak0.text, ".pak") ) {

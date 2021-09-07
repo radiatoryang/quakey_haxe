@@ -37,16 +37,19 @@
                     <spacer width="31%" />
                     <vbox width="256px" height="100%">
                         <spacer height="16" />
-                        <label text="Activity" id="activity" styleName="smallText" />
-                        <button id="buttonQueue" icon="images/icon_queue.png" styleName="biggerButton" text="QUEUE" />
-                        <button id="buttonMark" icon="images/icon_checkbox.png" styleName="bigButton" text="MARK DONE AND HIDE" tooltip="hidden mods won't be recommended in playlists or searches\n (you can unhide it in your Profile settings)"/>
+                        <labeloutlined text="Activity" id="activity" styleName="mediumText" />
+                        <hbox width="100%">
+                            <button id="buttonQueue" icon="images/icon_queue.png" styleName="biggerButton" text="QUEUE" />
+                            <button id="buttonLaunchOptions" icon="images/icon_gear.png" width="62" height="60" tooltip="click to configure\n(I hope you know what you're doing!)" />
+                        </hbox>
+                        <button id="buttonMark" icon="images/icon_checkbox.png" styleName="bigButton" text="MARK DONE AND HIDE" tooltip="you can always unhide mods later by\nlisting hidden mods in the Search page"/>
                         <hbox id="menuManage" width="100%">
                             <button id="buttonDelete" icon="images/icon_trash.png" tooltip="DELETE FILES (but not dependencies)\n and does not hide nor unqueue it" />
                             <button id="buttonRedownload" icon="images/icon_download.png" tooltip="RE-DOWNLOAD AND RE-INSTALL\n if this mod is broken for some reason,\nthis might repair it? maybe?" />
-                            <button id="buttonReinstall" icon="images/icon_gear.png" tooltip="RE-INSTALL TO...\n by default, Quakey puts each mod in a\n new folder but you can override it\n (like put many mods in one big folder)" />
+                            <button id="buttonReinstall" icon="images/icon_pack.png" tooltip="RE-INSTALL TO...\n by default, Quakey puts each mod in a\n new folder but you can override it\n (like put many mods in one big folder)" />
                             <button id="buttonBrowse" icon="images/icon_folder.png" tooltip="BROWSE FILES\n reveals this installed mod folder in Explorer" />
                         </hbox>
-                        <button id="buttonQuad" icon="images/icon_talk.png" styleName="bigButton" text="SEE ON QUADDICTED" />
+                        <button id="buttonQuad" icon="images/icon_talk.png" styleName="bigButton" text="RATE ON QUADDICTED" />
                     </vbox>
                     <spacer width="16" />
                 </hbox>

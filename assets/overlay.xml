@@ -8,4 +8,5 @@
     <button id="searchButton" icon="images/icon_search.png" tooltip="Search maps" />
     <!--<button id="notifyButton" icon="images/icon_bell.png" tooltip="Notification log" />-->
     <button id="configButton" icon="images/icon_gear.png" tooltip="Configure Quake paths" />
+    <spacer width="4" />
 </hbox>
